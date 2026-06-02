@@ -2207,7 +2207,7 @@ function exportReport() {
     const sc = {good:'good', warning:'warn', stopped:'stop'}[l.status]||'';
     html += `<tr><td>${t}</td><td>${l.machineTag}</td><td>${m.description||''}</td><td>${m.type||''}</td><td>${m.location||''}</td><td class="${sc}">${statusLabel(l.status)}</td><td>${l.inspector||''}</td><td>${l.remark||''}</td></tr>`;
   });
-  html += `</tbody></table><script>
+  html += `</tbody></table><${'script'}>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').then(reg => {
@@ -2215,7 +2215,7 @@ if ('serviceWorker' in navigator) {
     }).catch(err => console.warn('SW failed:', err));
   });
 }
-</script>
+</${'script'}>
 </body></html>`;
 
   const blob = new Blob([html], {type:'text/html;charset=utf-8;'});
