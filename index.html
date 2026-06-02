@@ -620,6 +620,239 @@
   /* ── HIDDEN VIDEO ── */
   #hidden-video { display: none; }
   #snap-canvas { display: none; }
+
+  /* ══════════════════════════════
+     MOBILE ENHANCEMENTS
+  ══════════════════════════════ */
+
+  /* Bottom nav for mobile */
+  .bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .bottom-nav-inner {
+    display: flex;
+    align-items: stretch;
+    height: 58px;
+  }
+  .bottom-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    cursor: pointer;
+    color: var(--text3);
+    font-size: 10px;
+    font-weight: 500;
+    border: none;
+    background: none;
+    font-family: var(--font);
+    transition: color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    padding: 0;
+  }
+  .bottom-nav-item .nav-icon { font-size: 20px; line-height: 1; }
+  .bottom-nav-item.active { color: var(--accent2); }
+  .bottom-nav-item:active { background: var(--bg3); }
+
+  /* FAB — floating PM button */
+  .fab {
+    display: none;
+    position: fixed;
+    bottom: 78px;
+    right: 18px;
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    font-size: 26px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(31,111,235,0.5);
+    z-index: 101;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s, background 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .fab:active { transform: scale(0.93); background: var(--accent2); }
+
+  /* Admin PIN Modal */
+  .pin-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 500;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(8px);
+  }
+  .pin-overlay.open { display: flex; }
+  .pin-box {
+    background: var(--bg2);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    padding: 32px 28px;
+    width: 100%;
+    max-width: 360px;
+    text-align: center;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+  }
+  .pin-icon { font-size: 40px; margin-bottom: 12px; }
+  .pin-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .pin-subtitle { font-size: 13px; color: var(--text3); margin-bottom: 24px; line-height: 1.5; }
+  .pin-dots {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+  .pin-dot {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 2px solid var(--border2);
+    background: transparent;
+    transition: all 0.15s;
+  }
+  .pin-dot.filled { background: var(--accent2); border-color: var(--accent2); }
+  .pin-dot.error { background: var(--stop); border-color: var(--stop); }
+  .pin-keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .pin-key {
+    height: 56px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    color: var(--text);
+    font-size: 20px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: var(--mono);
+    transition: all 0.1s;
+    -webkit-tap-highlight-color: transparent;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pin-key:active { background: var(--bg4); transform: scale(0.95); }
+  .pin-key.del { font-size: 18px; }
+  .pin-key.empty { background: transparent; border-color: transparent; cursor: default; }
+  .pin-error-msg {
+    font-size: 12px;
+    color: var(--stop);
+    margin-bottom: 12px;
+    min-height: 18px;
+  }
+  .pin-forgot { font-size: 12px; color: var(--text3); cursor: pointer; text-decoration: underline; }
+  .pin-forgot:hover { color: var(--text2); }
+
+  /* Admin badge in topbar */
+  .admin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(31,111,235,0.15);
+    border: 1px solid var(--accent);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 11px;
+    color: var(--accent2);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .admin-badge:hover { background: rgba(31,111,235,0.25); }
+
+  /* Settings lock overlay */
+  .settings-lock {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    text-align: center;
+    gap: 12px;
+    color: var(--text3);
+  }
+  .settings-lock .lock-icon { font-size: 56px; margin-bottom: 8px; }
+  .settings-lock h3 { font-size: 16px; font-weight: 600; color: var(--text2); }
+  .settings-lock p { font-size: 13px; line-height: 1.6; }
+
+  @media (max-width: 640px) {
+    /* Show bottom nav, hide top nav tabs */
+    .nav-tabs { display: none; }
+    .bottom-nav { display: flex; flex-direction: column; }
+    .fab { display: flex; }
+
+    /* Topbar adjustments */
+    .topbar { padding: 0 14px; height: 52px; }
+    .topbar-right .btn { display: none; } /* hide settings btn, use bottom nav */
+    #active-person-chip { display: none; } /* hide chip, shown elsewhere */
+
+    /* Main padding + bottom nav space */
+    .main { padding: 14px 14px 80px; }
+
+    /* Machine grid full width */
+    .machine-grid { grid-template-columns: 1fr; }
+
+    /* Bigger touch targets for machine cards */
+    .machine-card-header { padding: 14px 16px; }
+    .machine-body { padding: 10px 16px; }
+    .machine-footer { padding: 10px 16px; }
+    .machine-name { font-size: 15px; }
+
+    /* Stats row 2 cols */
+    .stats-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .stat-num { font-size: 28px; }
+
+    /* Filter bar scroll */
+    .filter-bar { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
+    .filter-bar::-webkit-scrollbar { display: none; }
+    .filter-input { min-width: 160px; }
+
+    /* Buttons bigger */
+    .btn { padding: 8px 16px; font-size: 14px; }
+    .btn-sm { padding: 7px 13px; font-size: 13px; }
+
+    /* Section header stack */
+    .section-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+    .section-header > div:last-child { width: 100%; display: flex; flex-wrap: wrap; gap: 8px; }
+
+    /* Table horizontal scroll */
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    table { min-width: 600px; }
+
+    /* Modal full width */
+    .modal { max-width: 100% !important; margin: 0; border-radius: 16px 16px 0 0; }
+    .modal-overlay { align-items: flex-end; padding: 0; }
+    .modal { max-height: 92vh; }
+
+    /* Camera bigger */
+    #camera-preview { height: 260px; }
+
+    /* Setup grid single col */
+    .setup-grid { grid-template-columns: 1fr; }
+
+    /* Status radio bigger */
+    .status-radio-label { padding: 14px 8px; font-size: 13px; }
+    .status-radio-label .icon { font-size: 24px; }
+
+    /* Toast position */
+    .toast-container { bottom: 74px; right: 12px; left: 12px; }
+    .toast { max-width: 100%; }
+
+    /* Pin box full */
+    .pin-box { max-width: 100%; border-radius: 16px; }
+  }
 </style>
 </head>
 <body>
@@ -632,8 +865,9 @@
   </div>
   <div class="topbar-right">
     <span id="active-person-chip"></span>
+    <div id="admin-topbar-badge" style="display:none" class="admin-badge" onclick="adminLogout()" title="คลิกเพื่อออกจากโหมด Admin">🔑 Admin</div>
     <button class="btn btn-sm" onclick="openModal('modal-person')">👤 เลือกผู้ตรวจ</button>
-    <button class="btn btn-sm" onclick="showPage('settings')">⚙️ ตั้งค่า</button>
+    <button class="btn btn-sm" onclick="requestAdminThenSettings()">⚙️ ตั้งค่า</button>
   </div>
 </div>
 
@@ -643,7 +877,7 @@
   <div class="nav-tab" onclick="showPage('machines')" data-page="machines">🏭 เครื่องจักร <span class="badge" id="badge-machines">0</span></div>
   <div class="nav-tab" onclick="showPage('log')" data-page="log">📋 บันทึก PM <span class="badge" id="badge-log">0</span></div>
   <div class="nav-tab" onclick="showPage('summary')" data-page="summary">📈 สรุปผล</div>
-  <div class="nav-tab" onclick="showPage('settings')" data-page="settings">⚙️ ตั้งค่า</div>
+  <div class="nav-tab" onclick="requestAdminThenSettings()" data-page="settings">⚙️ ตั้งค่า</div>
 </div>
 
 <!-- MAIN -->
@@ -809,69 +1043,96 @@
 
   <!-- ═══════════ SETTINGS ═══════════ -->
   <div class="page" id="page-settings">
-    <div class="section-title" style="margin-bottom:16px">⚙️ ตั้งค่าระบบ</div>
-
-    <div class="setup-grid">
-      <!-- GIST -->
-      <div class="setup-step">
-        <div class="setup-step-num">1</div>
-        <h3>GitHub Gist Token</h3>
-        <p>สร้าง Personal Access Token ที่ github.com/settings/tokens (ต้องการ scope: gist) แล้วใส่ด้านล่าง</p>
-        <div class="form-group">
-          <label class="form-label">GitHub Token</label>
-          <input type="password" class="form-input" id="gist-token" placeholder="ghp_xxxxxxxxxxxx">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Gist ID (ปล่อยว่างถ้าต้องการสร้างใหม่)</label>
-          <input type="text" class="form-input" id="gist-id" placeholder="กรอกหลังสร้าง Gist แล้ว">
-        </div>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-primary" onclick="saveGistConfig()">💾 บันทึก Token</button>
-          <button class="btn" onclick="testGistConnection()">🔗 ทดสอบ</button>
-          <button class="btn" onclick="createNewGist()">✨ สร้าง Gist ใหม่</button>
-        </div>
-        <div id="gist-status" style="margin-top:10px;font-size:12px;color:var(--text3)"></div>
-      </div>
-
-      <!-- IMPORT PERSON EXCEL -->
-      <div class="setup-step">
-        <div class="setup-step-num">2</div>
-        <h3>นำเข้าข้อมูลบุคลากร (Excel)</h3>
-        <p>ไฟล์ Excel ต้องมีคอลัมน์: <strong>ID, Name, Shift, Level</strong></p>
-        <button class="btn" onclick="document.getElementById('import-person-excel').click()">📥 นำเข้า Person Excel</button>
-        <input type="file" id="import-person-excel" accept=".xlsx,.xls" style="display:none" onchange="importPersonExcel(this)">
-        <div id="person-import-status" style="margin-top:10px;font-size:12px;color:var(--text3)"></div>
-        <div id="person-list-preview" style="margin-top:10px"></div>
-      </div>
-
-      <!-- IMPORT MACHINE EXCEL -->
-      <div class="setup-step">
-        <div class="setup-step-num">3</div>
-        <h3>นำเข้าข้อมูลเครื่องจักร (Excel)</h3>
-        <p>ไฟล์ Excel ต้องมีคอลัมน์: <strong>Tag, Description, Type, Location</strong></p>
-        <button class="btn" onclick="document.getElementById('import-machine-excel2').click()">📥 นำเข้า Machine Excel</button>
-        <input type="file" id="import-machine-excel2" accept=".xlsx,.xls" style="display:none" onchange="importMachineExcel(this)">
-        <div id="machine-import-status" style="margin-top:10px;font-size:12px;color:var(--text3)"></div>
-      </div>
-
-      <!-- SYNC -->
-      <div class="setup-step">
-        <div class="setup-step-num">4</div>
-        <h3>ซิงค์ข้อมูล</h3>
-        <p>ดึงหรืออัพโหลดข้อมูลจาก GitHub Gist เพื่อให้ทุกอุปกรณ์เห็นข้อมูลเดียวกัน</p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-primary" onclick="pushToGist()">☁️ Push ขึ้น Gist</button>
-          <button class="btn" onclick="syncFromGist()">⬇️ Pull จาก Gist</button>
-        </div>
-        <div id="sync-status" style="margin-top:10px;font-size:12px;color:var(--text3)"></div>
-      </div>
+    <!-- Lock screen shown when not admin -->
+    <div id="settings-lock-screen" class="settings-lock">
+      <div class="lock-icon">🔒</div>
+      <h3>ต้องการสิทธิ์ Admin</h3>
+      <p>หน้าตั้งค่านี้ถูกป้องกันด้วย PIN<br>เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถเข้าได้</p>
+      <button class="btn btn-primary" onclick="requestAdminThenSettings()">🔑 ใส่ PIN เข้าสู่ระบบ</button>
     </div>
 
-    <hr class="divider">
-    <div class="card" style="border-color:var(--stop);max-width:400px">
-      <div class="card-title" style="color:var(--stop)">⚠️ Danger Zone</div>
-      <p style="font-size:12px;color:var(--text2);margin-bottom:12px">ล้างข้อมูลทั้งหมดในอุปกรณ์นี้ (ข้อมูลบน Gist ยังอยู่)</p>
-      <button class="btn btn-danger btn-sm" onclick="clearLocalData()">🗑️ ล้างข้อมูล Local</button>
+    <!-- Actual settings, shown when admin is unlocked -->
+    <div id="settings-content" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+        <div class="section-title">⚙️ ตั้งค่าระบบ</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="admin-badge">🔑 Admin Mode</div>
+          <button class="btn btn-sm btn-danger" onclick="adminLogout()">🔒 ล็อคตั้งค่า</button>
+        </div>
+      </div>
+
+      <!-- Change PIN section -->
+      <div class="card" style="margin-bottom:16px;border-color:var(--accent)">
+        <div class="card-title">🔐 Admin PIN</div>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:12px">
+          เปลี่ยน PIN สำหรับป้องกันหน้าตั้งค่า (PIN 4 หลัก)
+        </p>
+        <button class="btn btn-sm" onclick="openPinSetOverlay()">🔑 เปลี่ยน / ตั้ง PIN ใหม่</button>
+        <div id="pin-change-status" style="margin-top:8px;font-size:12px;color:var(--text3)"></div>
+      </div>
+
+      <div class="setup-grid">
+        <!-- GIST -->
+        <div class="setup-step">
+          <div class="setup-step-num">1</div>
+          <h3>GitHub Gist Token</h3>
+          <p>สร้าง Personal Access Token ที่ github.com/settings/tokens (ต้องการ scope: gist) แล้วใส่ด้านล่าง</p>
+          <div class="form-group">
+            <label class="form-label">GitHub Token</label>
+            <input type="password" class="form-input" id="gist-token" placeholder="ghp_xxxxxxxxxxxx">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Gist ID (ปล่อยว่างถ้าต้องการสร้างใหม่)</label>
+            <input type="text" class="form-input" id="gist-id" placeholder="กรอกหลังสร้าง Gist แล้ว">
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-primary" onclick="saveGistConfig()">💾 บันทึก Token</button>
+            <button class="btn" onclick="testGistConnection()">🔗 ทดสอบ</button>
+            <button class="btn" onclick="createNewGist()">✨ สร้าง Gist ใหม่</button>
+          </div>
+          <div id="gist-status" style="margin-top:10px;font-size:12px;color:var(--text3)"></div>
+        </div>
+
+        <!-- IMPORT PERSON EXCEL -->
+        <div class="setup-step">
+          <div class="setup-step-num">2</div>
+          <h3>นำเข้าข้อมูลบุคลากร (Excel)</h3>
+          <p>ไฟล์ Excel ต้องมีคอลัมน์: <strong>ID, Name, Shift, Level</strong></p>
+          <button class="btn" onclick="document.getElementById('import-person-excel').click()">📥 นำเข้า Person Excel</button>
+          <input type="file" id="import-person-excel" accept=".xlsx,.xls" style="display:none" onchange="importPersonExcel(this)">
+          <div id="person-import-status" style="margin-top:10px;font-size:12px;color:var(--text3)"></div>
+          <div id="person-list-preview" style="margin-top:10px"></div>
+        </div>
+
+        <!-- IMPORT MACHINE EXCEL -->
+        <div class="setup-step">
+          <div class="setup-step-num">3</div>
+          <h3>นำเข้าข้อมูลเครื่องจักร (Excel)</h3>
+          <p>ไฟล์ Excel ต้องมีคอลัมน์: <strong>Tag, Description, Type, Location</strong></p>
+          <button class="btn" onclick="document.getElementById('import-machine-excel2').click()">📥 นำเข้า Machine Excel</button>
+          <input type="file" id="import-machine-excel2" accept=".xlsx,.xls" style="display:none" onchange="importMachineExcel(this)">
+          <div id="machine-import-status" style="margin-top:10px;font-size:12px;color:var(--text3)"></div>
+        </div>
+
+        <!-- SYNC -->
+        <div class="setup-step">
+          <div class="setup-step-num">4</div>
+          <h3>ซิงค์ข้อมูล</h3>
+          <p>ดึงหรืออัพโหลดข้อมูลจาก GitHub Gist เพื่อให้ทุกอุปกรณ์เห็นข้อมูลเดียวกัน</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-primary" onclick="pushToGist()">☁️ Push ขึ้น Gist</button>
+            <button class="btn" onclick="syncFromGist()">⬇️ Pull จาก Gist</button>
+          </div>
+          <div id="sync-status" style="margin-top:10px;font-size:12px;color:var(--text3)"></div>
+        </div>
+      </div>
+
+      <hr class="divider">
+      <div class="card" style="border-color:var(--stop);max-width:400px">
+        <div class="card-title" style="color:var(--stop)">⚠️ Danger Zone</div>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:12px">ล้างข้อมูลทั้งหมดในอุปกรณ์นี้ (ข้อมูลบน Gist ยังอยู่)</p>
+        <button class="btn btn-danger btn-sm" onclick="clearLocalData()">🗑️ ล้างข้อมูล Local</button>
+      </div>
     </div>
   </div>
 
@@ -985,6 +1246,96 @@
 <!-- Hidden canvas for camera -->
 <canvas id="snap-canvas"></canvas>
 
+<!-- ═══════════ BOTTOM NAV (mobile) ═══════════ -->
+<nav class="bottom-nav">
+  <div class="bottom-nav-inner">
+    <button class="bottom-nav-item active" onclick="showPage('dashboard')" data-bnav="dashboard">
+      <span class="nav-icon">📊</span>Dashboard
+    </button>
+    <button class="bottom-nav-item" onclick="showPage('machines')" data-bnav="machines">
+      <span class="nav-icon">🏭</span>เครื่องจักร
+    </button>
+    <button class="bottom-nav-item" onclick="showPage('log')" data-bnav="log">
+      <span class="nav-icon">📋</span>บันทึก
+    </button>
+    <button class="bottom-nav-item" onclick="showPage('summary')" data-bnav="summary">
+      <span class="nav-icon">📈</span>สรุปผล
+    </button>
+    <button class="bottom-nav-item" onclick="requestAdminThenSettings()" data-bnav="settings">
+      <span class="nav-icon">⚙️</span>ตั้งค่า
+    </button>
+  </div>
+</nav>
+
+<!-- FAB — quick PM entry -->
+<button class="fab" onclick="openPmModal(null)" title="บันทึก PM">＋</button>
+
+<!-- ═══════════ ADMIN PIN MODAL ═══════════ -->
+<div class="pin-overlay" id="pin-overlay">
+  <div class="pin-box">
+    <div class="pin-icon">🔐</div>
+    <div class="pin-title">Admin เท่านั้น</div>
+    <div class="pin-subtitle" id="pin-subtitle">ใส่รหัส PIN เพื่อเข้าหน้าตั้งค่า<br>หรือตั้งรหัสใหม่หากยังไม่มี</div>
+    <div class="pin-dots" id="pin-dots">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-error-msg" id="pin-error"></div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="pinPress('1')">1</button>
+      <button class="pin-key" onclick="pinPress('2')">2</button>
+      <button class="pin-key" onclick="pinPress('3')">3</button>
+      <button class="pin-key" onclick="pinPress('4')">4</button>
+      <button class="pin-key" onclick="pinPress('5')">5</button>
+      <button class="pin-key" onclick="pinPress('6')">6</button>
+      <button class="pin-key" onclick="pinPress('7')">7</button>
+      <button class="pin-key" onclick="pinPress('8')">8</button>
+      <button class="pin-key" onclick="pinPress('9')">9</button>
+      <button class="pin-key empty"></button>
+      <button class="pin-key" onclick="pinPress('0')">0</button>
+      <button class="pin-key del" onclick="pinDel()">⌫</button>
+    </div>
+    <div class="pin-error-msg" id="pin-attempt-msg"></div>
+    <button class="btn" style="width:100%;margin-top:4px" onclick="closePinOverlay()">ยกเลิก</button>
+    <div style="margin-top:14px">
+      <span class="pin-forgot" onclick="showPinReset()">ลืม PIN / รีเซ็ต?</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ ADMIN PIN SET MODAL ═══════════ -->
+<div class="pin-overlay" id="pin-set-overlay">
+  <div class="pin-box">
+    <div class="pin-icon">🛡️</div>
+    <div class="pin-title" id="pin-set-title">ตั้ง Admin PIN ใหม่</div>
+    <div class="pin-subtitle" id="pin-set-subtitle">ใส่ PIN 4 หลัก (ครั้งที่ 1)</div>
+    <div class="pin-dots" id="pin-set-dots">
+      <div class="pin-dot" id="psd0"></div>
+      <div class="pin-dot" id="psd1"></div>
+      <div class="pin-dot" id="psd2"></div>
+      <div class="pin-dot" id="psd3"></div>
+    </div>
+    <div class="pin-error-msg" id="pin-set-error"></div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="pinSetPress('1')">1</button>
+      <button class="pin-key" onclick="pinSetPress('2')">2</button>
+      <button class="pin-key" onclick="pinSetPress('3')">3</button>
+      <button class="pin-key" onclick="pinSetPress('4')">4</button>
+      <button class="pin-key" onclick="pinSetPress('5')">5</button>
+      <button class="pin-key" onclick="pinSetPress('6')">6</button>
+      <button class="pin-key" onclick="pinSetPress('7')">7</button>
+      <button class="pin-key" onclick="pinSetPress('8')">8</button>
+      <button class="pin-key" onclick="pinSetPress('9')">9</button>
+      <button class="pin-key empty"></button>
+      <button class="pin-key" onclick="pinSetPress('0')">0</button>
+      <button class="pin-key del" onclick="pinSetDel()">⌫</button>
+    </div>
+    <button class="btn" style="width:100%;margin-top:8px" onclick="closePinSetOverlay()">ยกเลิก</button>
+  </div>
+</div>
+
 <script>
 // ═══════════════════════════════════════
 // STATE
@@ -999,6 +1350,8 @@ let state = {
   statusFilter: 'all',
   currentPhotos: [],
   cameraStream: null,
+  adminPin: '',        // hashed PIN stored in localStorage
+  isAdminUnlocked: false, // session-only flag
 };
 
 // ═══════════════════════════════════════
@@ -1026,6 +1379,7 @@ function loadLocal() {
       state.activePerson = loaded.activePerson || null;
       state.gistToken = loaded.gistToken || '';
       state.gistId = loaded.gistId || '';
+      state.adminPin = loaded.adminPin || '';
     }
   } catch(e) { console.warn('loadLocal failed', e); }
 }
@@ -1038,6 +1392,7 @@ function saveLocal() {
     activePerson: state.activePerson,
     gistToken: state.gistToken,
     gistId: state.gistId,
+    adminPin: state.adminPin,
   }));
 }
 
@@ -1055,18 +1410,46 @@ function updateTopbarDate() {
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.bottom-nav-item').forEach(t => t.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
   document.querySelector(`[data-page="${name}"]`)?.classList.add('active');
+  document.querySelector(`[data-bnav="${name}"]`)?.classList.add('active');
 
   if (name === 'dashboard') renderDashboard();
   if (name === 'machines') renderMachines();
   if (name === 'log') renderLog();
   if (name === 'summary') renderSummary();
   if (name === 'settings') {
-    document.getElementById('gist-token').value = state.gistToken;
-    document.getElementById('gist-id').value = state.gistId;
-    renderPersonPreview();
+    renderSettingsPage();
+    if (state.isAdminUnlocked) {
+      document.getElementById('gist-token').value = state.gistToken;
+      document.getElementById('gist-id').value = state.gistId;
+      renderPersonPreview();
+    }
   }
+}
+
+function renderSettingsPage() {
+  const lock = document.getElementById('settings-lock-screen');
+  const content = document.getElementById('settings-content');
+  if (state.isAdminUnlocked) {
+    lock.style.display = 'none';
+    content.style.display = 'block';
+    document.getElementById('admin-topbar-badge').style.display = 'flex';
+  } else {
+    lock.style.display = 'flex';
+    content.style.display = 'none';
+    document.getElementById('admin-topbar-badge').style.display = 'none';
+  }
+}
+
+function requestAdminThenSettings() {
+  if (state.isAdminUnlocked) {
+    showPage('settings');
+    return;
+  }
+  // Open PIN entry
+  openPinOverlay();
 }
 
 // ═══════════════════════════════════════
@@ -1824,7 +2207,16 @@ function exportReport() {
     const sc = {good:'good', warning:'warn', stopped:'stop'}[l.status]||'';
     html += `<tr><td>${t}</td><td>${l.machineTag}</td><td>${m.description||''}</td><td>${m.type||''}</td><td>${m.location||''}</td><td class="${sc}">${statusLabel(l.status)}</td><td>${l.inspector||''}</td><td>${l.remark||''}</td></tr>`;
   });
-  html += ['<\/tbody><\/table><\/body><\/html>'].join('');
+  html += `</tbody></table><script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      console.log('SW registered:', reg.scope);
+    }).catch(err => console.warn('SW failed:', err));
+  });
+}
+</script>
+</body></html>`;
 
   const blob = new Blob([html], {type:'text/html;charset=utf-8;'});
   const a = document.createElement('a');
@@ -1869,6 +2261,191 @@ document.querySelectorAll('.modal-overlay').forEach(o => {
     if (e.target === o) closeModal(o.id);
   });
 });
+
+// ═══════════════════════════════════════
+// ADMIN PIN SYSTEM
+// ═══════════════════════════════════════
+let pinBuffer = '';
+let pinSetBuffer = '';
+let pinSetStep = 1;
+let pinSetFirst = '';
+let pinAttempts = 0;
+const PIN_MAX_ATTEMPTS = 5;
+
+// Simple hash (non-crypto, for UX pin protection)
+function hashPin(pin) {
+  let h = 0;
+  for (let i = 0; i < pin.length; i++) {
+    h = (Math.imul(31, h) + pin.charCodeAt(i)) | 0;
+  }
+  return 'pm_' + Math.abs(h).toString(36) + pin.length;
+}
+
+function openPinOverlay() {
+  pinBuffer = '';
+  pinAttempts = 0;
+  document.getElementById('pin-error').textContent = '';
+  document.getElementById('pin-attempt-msg').textContent = '';
+  updatePinDots('pin-dots', 'pd', pinBuffer);
+
+  // If no PIN set, go straight to set-PIN flow
+  if (!state.adminPin) {
+    document.getElementById('pin-subtitle').textContent = 'ยังไม่มี PIN — กำลังนำไปตั้งค่า PIN ใหม่';
+    setTimeout(() => { closePinOverlay(); openPinSetOverlay(); }, 900);
+  }
+  document.getElementById('pin-overlay').classList.add('open');
+}
+
+function closePinOverlay() {
+  document.getElementById('pin-overlay').classList.remove('open');
+  pinBuffer = '';
+}
+
+function pinPress(d) {
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += d;
+  updatePinDots('pin-dots', 'pd', pinBuffer);
+  if (pinBuffer.length === 4) {
+    setTimeout(() => verifyPin(), 120);
+  }
+}
+
+function pinDel() {
+  pinBuffer = pinBuffer.slice(0, -1);
+  updatePinDots('pin-dots', 'pd', pinBuffer);
+  document.getElementById('pin-error').textContent = '';
+}
+
+function verifyPin() {
+  if (hashPin(pinBuffer) === state.adminPin) {
+    // Correct
+    pinAttempts = 0;
+    state.isAdminUnlocked = true;
+    closePinOverlay();
+    showPage('settings');
+    toast('เข้าสู่โหมด Admin แล้ว 🔑', 'success');
+  } else {
+    // Wrong
+    pinAttempts++;
+    pinBuffer = '';
+    const remaining = PIN_MAX_ATTEMPTS - pinAttempts;
+    // Flash error
+    for (let i = 0; i < 4; i++) {
+      const dot = document.getElementById('pd' + i);
+      dot.classList.add('error');
+      setTimeout(() => dot.classList.remove('error'), 600);
+    }
+    updatePinDots('pin-dots', 'pd', pinBuffer);
+    if (pinAttempts >= PIN_MAX_ATTEMPTS) {
+      document.getElementById('pin-error').textContent = '❌ PIN ผิดเกิน ' + PIN_MAX_ATTEMPTS + ' ครั้ง';
+      document.getElementById('pin-attempt-msg').textContent = 'กรุณารอ 30 วินาที';
+      // Temporarily lock
+      const keys = document.querySelectorAll('#pin-overlay .pin-key');
+      keys.forEach(k => k.disabled = true);
+      setTimeout(() => {
+        keys.forEach(k => k.disabled = false);
+        pinAttempts = 0;
+        document.getElementById('pin-error').textContent = '';
+        document.getElementById('pin-attempt-msg').textContent = '';
+      }, 30000);
+    } else {
+      document.getElementById('pin-error').textContent = `❌ PIN ไม่ถูกต้อง (เหลือ ${remaining} ครั้ง)`;
+    }
+  }
+}
+
+function updatePinDots(containerId, prefix, buf) {
+  for (let i = 0; i < 4; i++) {
+    const dot = document.getElementById(prefix + i);
+    dot.classList.toggle('filled', i < buf.length);
+    dot.classList.remove('error');
+  }
+}
+
+function adminLogout() {
+  state.isAdminUnlocked = false;
+  document.getElementById('admin-topbar-badge').style.display = 'none';
+  renderSettingsPage();
+  toast('ออกจากโหมด Admin แล้ว 🔒', 'warn');
+}
+
+// ── PIN SET FLOW ──
+function openPinSetOverlay() {
+  pinSetBuffer = '';
+  pinSetStep = 1;
+  pinSetFirst = '';
+  document.getElementById('pin-set-title').textContent = 'ตั้ง Admin PIN ใหม่';
+  document.getElementById('pin-set-subtitle').textContent = 'ใส่ PIN 4 หลัก (ครั้งที่ 1)';
+  document.getElementById('pin-set-error').textContent = '';
+  updatePinDots('pin-set-dots', 'psd', pinSetBuffer);
+  document.getElementById('pin-set-overlay').classList.add('open');
+}
+
+function closePinSetOverlay() {
+  document.getElementById('pin-set-overlay').classList.remove('open');
+  pinSetBuffer = '';
+  pinSetStep = 1;
+  pinSetFirst = '';
+}
+
+function pinSetPress(d) {
+  if (pinSetBuffer.length >= 4) return;
+  pinSetBuffer += d;
+  updatePinDots('pin-set-dots', 'psd', pinSetBuffer);
+  if (pinSetBuffer.length === 4) {
+    setTimeout(() => confirmPinSet(), 120);
+  }
+}
+
+function pinSetDel() {
+  pinSetBuffer = pinSetBuffer.slice(0, -1);
+  updatePinDots('pin-set-dots', 'psd', pinSetBuffer);
+  document.getElementById('pin-set-error').textContent = '';
+}
+
+function confirmPinSet() {
+  if (pinSetStep === 1) {
+    pinSetFirst = pinSetBuffer;
+    pinSetBuffer = '';
+    pinSetStep = 2;
+    document.getElementById('pin-set-subtitle').textContent = 'ยืนยัน PIN อีกครั้ง (ครั้งที่ 2)';
+    document.getElementById('pin-set-error').textContent = '';
+    updatePinDots('pin-set-dots', 'psd', pinSetBuffer);
+  } else {
+    if (pinSetBuffer === pinSetFirst) {
+      state.adminPin = hashPin(pinSetBuffer);
+      saveLocal();
+      closePinSetOverlay();
+      toast('ตั้ง PIN สำเร็จแล้ว 🔐', 'success');
+      const statusEl = document.getElementById('pin-change-status');
+      if (statusEl) statusEl.textContent = '✅ เปลี่ยน PIN แล้ว';
+      // Auto-unlock after setting
+      state.isAdminUnlocked = true;
+      renderSettingsPage();
+    } else {
+      pinSetBuffer = '';
+      pinSetFirst = '';
+      pinSetStep = 1;
+      document.getElementById('pin-set-subtitle').textContent = 'ใส่ PIN 4 หลัก (ครั้งที่ 1)';
+      document.getElementById('pin-set-error').textContent = '❌ PIN ไม่ตรงกัน กรุณาใส่ใหม่';
+      updatePinDots('pin-set-dots', 'psd', pinSetBuffer);
+    }
+  }
+}
+
+function showPinReset() {
+  closePinOverlay();
+  // Show a confirm with master override hint
+  const ans = prompt('ระบุ "RESET" เพื่อล้าง PIN (ต้องแก้ไขโดยตรงใน localStorage หรือให้ผู้ดูแลรีเซ็ต):');
+  if (ans === 'RESET') {
+    state.adminPin = '';
+    saveLocal();
+    toast('ล้าง PIN แล้ว — กรุณาตั้ง PIN ใหม่', 'warn');
+    openPinSetOverlay();
+  } else if (ans !== null) {
+    toast('คำตอบไม่ถูกต้อง', 'error');
+  }
+}
 
 // ═══════════════════════════════════════
 // BOOT
