@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Machine PM System</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<!-- Firebase -->
+<!-- Firebase (no defer — must load synchronously before inline script) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -651,7 +651,7 @@
 <body>
 
 <!-- ═══════════ FIREBASE CONFIG NOTICE ═══════════ -->
-<div id="firebase-config-notice" style="display:none;position:fixed;inset:0;background:#0d1117;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px">
+<div id="firebase-config-notice" style="display:none;position:fixed;inset:0;background:#0d1117;z-index:9999;align-items:center;justify-content:center;padding:20px">
   <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;max-width:480px;width:100%">
     <div style="font-size:22px;font-weight:700;margin-bottom:6px;color:#e6edf3">⚙️ ตั้งค่า Firebase</div>
     <div style="font-size:13px;color:#9198a1;margin-bottom:20px;line-height:1.7">กรอก Firebase Config จาก Project ของคุณ<br>ดูคู่มือใน README.md สำหรับวิธีสร้าง Firebase Project</div>
@@ -1250,11 +1250,23 @@ function init() {
   document.getElementById('summary-month').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   document.getElementById('log-filter-date').value = now.toISOString().split('T')[0];
 
-  // Boot Firebase
-  const cfg = getSavedFirebaseConfig();
-  if (cfg && cfg.apiKey) {
-    initFirebase(cfg);
+  // Boot Firebase — poll until SDK globals are ready (handles slow CDN)
+  waitForFirebaseAndBoot();
+}
+
+function waitForFirebaseAndBoot(attempts) {
+  attempts = attempts || 0;
+  if (typeof firebase !== 'undefined' && firebase.initializeApp) {
+    const cfg = getSavedFirebaseConfig();
+    if (cfg && cfg.apiKey) {
+      initFirebase(cfg);
+    } else {
+      showFirebaseConfig();
+    }
+  } else if (attempts < 20) {
+    setTimeout(() => waitForFirebaseAndBoot(attempts + 1), 200);
   } else {
+    console.error('Firebase SDK failed to load after 4s');
     showFirebaseConfig();
   }
 }
@@ -2178,26 +2190,46 @@ function saveFirebaseConfig() {
   }
   localStorage.setItem(FB_CONFIG_KEY, JSON.stringify(cfg));
   document.getElementById('firebase-config-notice').style.display = 'none';
-  initFirebase(cfg);
+  document.getElementById('fc-error').style.display = 'none';
+  // Show loading state while Firebase initializes
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('btn-google-login').disabled = true;
+  document.getElementById('btn-google-login').style.opacity = '0.5';
+  initFirebase(cfg).finally(() => {
+    document.getElementById('btn-google-login').disabled = false;
+    document.getElementById('btn-google-login').style.opacity = '1';
+  });
 }
 
-function initFirebase(cfg) {
+async function initFirebase(cfg) {
+  // Guard: make sure Firebase SDK is actually loaded
+  if (typeof firebase === 'undefined') {
+    console.error('Firebase SDK not loaded yet');
+    setTimeout(() => initFirebase(cfg), 500);
+    return;
+  }
   try {
-    if (firebaseApp) {
-      // Already initialized — reinitialize
-      firebase.app().delete().then(() => {
-        firebaseApp = firebase.initializeApp(cfg);
-        db = firebase.firestore();
-        setupAuthListener();
-      });
-    } else {
-      firebaseApp = firebase.initializeApp(cfg);
-      db = firebase.firestore();
-      setupAuthListener();
-    }
+    // Delete existing app if already initialized
+    try {
+      const existing = firebase.apps;
+      if (existing && existing.length > 0) {
+        await Promise.all(existing.map(a => a.delete()));
+      }
+    } catch(e) { /* ignore */ }
+
+    firebaseApp = firebase.initializeApp(cfg);
+    db = firebase.firestore();
+    // Enable offline persistence
+    db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+    setupAuthListener();
   } catch(e) {
-    console.warn('Firebase init error:', e);
-    showLoginScreen();
+    console.error('Firebase init error:', e);
+    const errEl = document.getElementById('fc-error');
+    if (errEl) {
+      errEl.textContent = '❌ Config ไม่ถูกต้อง: ' + (e.message || e.code || e);
+      errEl.style.display = 'block';
+    }
+    showFirebaseConfig();
   }
 }
 
@@ -2791,9 +2823,13 @@ const _origSavePm = savePmRecord;
 // (patched inline below in init override)
 
 // ═══════════════════════════════════════
-// BOOT (FIREBASE INIT)
+// BOOT — wait for DOM + all scripts ready
 // ═══════════════════════════════════════
-init();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init(); // DOM already ready (e.g. script at bottom)
+}
 </script>
 </body>
 </html>
