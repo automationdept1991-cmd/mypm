@@ -892,6 +892,8 @@
     <div id="topbar-date" style="font-size:11px;color:var(--text3)"></div>
   </div>
   <div class="topbar-right">
+    <!-- Active person chip (shows selected inspector) -->
+    <span id="active-person-chip"></span>
     <!-- Person selector — icon only on mobile -->
     <button class="btn btn-sm" onclick="openModal('modal-person')" id="btn-person-topbar" title="เลือกผู้ตรวจ">
       <span id="topbar-person-icon">👤</span>
@@ -1801,6 +1803,7 @@ function removePhoto(i) {
 // ═══════════════════════════════════════
 function renderActivePerson() {
   const chip = document.getElementById('active-person-chip');
+  if (!chip) return; // guard: element not in DOM yet
   if (state.activePerson) {
     chip.innerHTML = `<div class="person-chip">
       👤 ${escHtml(state.activePerson.name)}
