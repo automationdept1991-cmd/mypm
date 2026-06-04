@@ -921,7 +921,7 @@
   <div class="nav-tab" onclick="showPage('machines')" data-page="machines">🏭 <span class="nav-label">เครื่องจักร</span> <span class="badge" id="badge-machines">0</span></div>
   <div class="nav-tab" onclick="showPage('log')" data-page="log">📋 <span class="nav-label">PM Log</span> <span class="badge" id="badge-log">0</span></div>
   <div class="nav-tab" onclick="showPage('summary')" data-page="summary">📈 <span class="nav-label">สรุป</span></div>
-  <div class="nav-tab" onclick="showPage('settings')" data-page="settings">⚙️ <span class="nav-label">ตั้งค่า</span></div>
+  <div class="nav-tab" id="nav-settings" style="display:none" onclick="showPage('settings')" data-page="settings">⚙️ <span class="nav-label">ตั้งค่า</span></div>
 </div>
 
 <!-- MAIN -->
@@ -977,8 +977,10 @@
         <div class="section-sub" id="machine-count-sub">—</div>
       </div>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-sm" onclick="document.getElementById('import-machine-excel').click()">📥 นำเข้า Machine Excel</button>
-        <input type="file" id="import-machine-excel" accept=".xlsx,.xls" style="display:none" onchange="importMachineExcel(this)">
+        <div id="machines-admin-btns" style="display:none">
+          <button class="btn btn-sm" onclick="document.getElementById('import-machine-excel').click()">📥 นำเข้า Machine Excel</button>
+          <input type="file" id="import-machine-excel" accept=".xlsx,.xls" style="display:none" onchange="importMachineExcel(this)">
+        </div>
         <button class="btn btn-primary btn-sm" onclick="openPmModal(null)">+ บันทึก PM</button>
       </div>
     </div>
@@ -1350,6 +1352,11 @@ function updateTopbarDate() {
 // NAV
 // ═══════════════════════════════════════
 function showPage(name) {
+  // Settings page — admin only
+  if (name === 'settings' && currentUserRole !== 'admin') {
+    toast('เฉพาะ Admin เท่านั้น', 'error');
+    return;
+  }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
@@ -2444,9 +2451,13 @@ function enterApp() {
   }
   document.getElementById('topbar-username').textContent = currentUser.displayName || currentUser.email;
 
-  // Show admin button if admin
+  // Show admin button + settings tab + admin-only UI if admin
   if (currentUserRole === 'admin') {
     document.getElementById('topbar-admin-btn').style.display = 'flex';
+    const navSettings = document.getElementById('nav-settings');
+    if (navSettings) navSettings.style.display = '';
+    const machineAdminBtns = document.getElementById('machines-admin-btns');
+    if (machineAdminBtns) machineAdminBtns.style.display = 'flex';
   }
 
   addActivityLog(currentUser.email, 'login', 'เข้าสู่ระบบสำเร็จ');
