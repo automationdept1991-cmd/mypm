@@ -57,25 +57,46 @@
   .topbar {
     background: var(--bg2);
     border-bottom: 1px solid var(--border);
-    padding: 0 20px;
+    padding: 0 12px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 56px;
+    height: 52px;
     position: sticky;
     top: 0;
     z-index: 100;
+    gap: 8px;
   }
-  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .topbar-left { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
   .topbar-logo {
     font-family: var(--mono);
-    font-size: 16px;
-    font-weight: 500;
+    font-size: 15px;
+    font-weight: 600;
     color: var(--accent2);
     letter-spacing: 1px;
+    flex-shrink: 0;
   }
   .topbar-logo span { color: var(--text3); }
-  .topbar-right { display: flex; align-items: center; gap: 8px; }
+  #topbar-date { display: none; } /* hidden on mobile, shown on desktop */
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    min-width: 0;
+  }
+  @media (min-width: 640px) {
+    #topbar-date { display: block; }
+    .topbar { padding: 0 20px; }
+  }
+
+  /* ── TOPBAR RESPONSIVE LABELS ── */
+  .topbar-label-desktop { display: none; }
+  .topbar-name { display: none; }
+  @media (min-width: 520px) {
+    .topbar-label-desktop { display: inline; }
+    .topbar-name { display: block; }
+  }
 
   /* ── NAV TABS ── */
   .nav-tabs {
@@ -87,7 +108,7 @@
     overflow-x: auto;
   }
   .nav-tab {
-    padding: 10px 16px;
+    padding: 10px 10px;
     cursor: pointer;
     color: var(--text2);
     border-bottom: 2px solid transparent;
@@ -97,7 +118,12 @@
     transition: all 0.15s;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
+  }
+  .nav-label { display: none; }
+  @media (min-width: 400px) {
+    .nav-label { display: inline; }
+    .nav-tab { padding: 10px 14px; gap: 5px; }
   }
   .nav-tab:hover { color: var(--text); }
   .nav-tab.active { color: var(--accent2); border-bottom-color: var(--accent2); }
@@ -111,7 +137,8 @@
   }
 
   /* ── MAIN CONTENT ── */
-  .main { padding: 20px; max-width: 1400px; margin: 0 auto; }
+  .main { padding: 12px; max-width: 1400px; margin: 0 auto; }
+  @media (min-width: 640px) { .main { padding: 20px; } }
   .page { display: none; }
   .page.active { display: block; }
 
@@ -542,12 +569,15 @@
   .person-chip {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     background: var(--bg4);
     border: 1px solid var(--border);
     border-radius: 20px;
-    padding: 4px 10px;
-    font-size: 12px;
+    padding: 3px 8px;
+    font-size: 11px;
+    max-width: 100px;
+    overflow: hidden;
+    white-space: nowrap;
   }
   .person-chip .shift-badge {
     background: var(--accent);
@@ -562,8 +592,10 @@
   .section-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     margin-bottom: 16px;
+    gap: 8px;
+    flex-wrap: wrap;
   }
   .section-title { font-size: 16px; font-weight: 600; }
   .section-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
@@ -857,30 +889,37 @@
 <div class="topbar">
   <div class="topbar-left">
     <div class="topbar-logo">PM<span>/</span>SYS</div>
-    <div style="font-size:12px;color:var(--text3)" id="topbar-date"></div>
+    <div id="topbar-date" style="font-size:11px;color:var(--text3)"></div>
   </div>
   <div class="topbar-right">
-    <span id="active-person-chip"></span>
-    <button class="btn btn-sm" onclick="openModal('modal-person')">👤 เลือกผู้ตรวจ</button>
+    <!-- Person selector — icon only on mobile -->
+    <button class="btn btn-sm" onclick="openModal('modal-person')" id="btn-person-topbar" title="เลือกผู้ตรวจ">
+      <span id="topbar-person-icon">👤</span>
+      <span class="topbar-label-desktop">เลือกผู้ตรวจ</span>
+    </button>
+    <!-- Admin button -->
     <div id="topbar-admin-btn" style="display:none;position:relative">
-      <button class="btn btn-sm" style="border-color:#d29922;color:#d29922" onclick="openAdminPanel()">🛡️ Admin</button>
-      <span id="pending-badge" style="display:none;position:absolute;top:-6px;right:-6px;background:#da3633;color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:none;align-items:center;justify-content:center;font-family:monospace;padding:0 4px;pointer-events:none">0</span>
+      <button class="btn btn-sm" style="border-color:#d29922;color:#d29922;padding:4px 10px" onclick="openAdminPanel()" title="Admin Panel">
+        🛡️<span class="topbar-label-desktop"> Admin</span>
+      </button>
+      <span id="pending-badge" style="display:none;position:absolute;top:-5px;right:-5px;background:#da3633;color:#fff;font-size:10px;font-weight:700;min-width:17px;height:17px;border-radius:9px;align-items:center;justify-content:center;font-family:monospace;padding:0 3px;pointer-events:none;line-height:1">0</span>
     </div>
-    <div id="topbar-user" style="display:none;align-items:center;gap:8px">
-      <img id="topbar-avatar" width="28" height="28" style="border-radius:50%;border:2px solid #30363d">
-      <span id="topbar-username" style="font-size:12px;color:#9198a1;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
-      <button class="btn btn-sm btn-danger" onclick="signOut()" style="padding:3px 8px">ออก</button>
+    <!-- User info -->
+    <div id="topbar-user" style="display:none;align-items:center;gap:6px">
+      <img id="topbar-avatar" width="28" height="28" style="border-radius:50%;border:2px solid #30363d;flex-shrink:0;cursor:pointer" onclick="openAdminPanel()" title="Admin Panel">
+      <span id="topbar-username" style="font-size:11px;color:#9198a1;max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:none" class="topbar-name"></span>
+      <button class="btn btn-sm btn-danger" onclick="signOut()" style="padding:3px 8px;font-size:11px">ออก</button>
     </div>
   </div>
 </div>
 
 <!-- NAV -->
 <div class="nav-tabs">
-  <div class="nav-tab active" onclick="showPage('dashboard')" data-page="dashboard">📊 Dashboard</div>
-  <div class="nav-tab" onclick="showPage('machines')" data-page="machines">🏭 เครื่องจักร <span class="badge" id="badge-machines">0</span></div>
-  <div class="nav-tab" onclick="showPage('log')" data-page="log">📋 บันทึก PM <span class="badge" id="badge-log">0</span></div>
-  <div class="nav-tab" onclick="showPage('summary')" data-page="summary">📈 สรุปผล</div>
-  <div class="nav-tab" onclick="showPage('settings')" data-page="settings">⚙️ ตั้งค่า</div>
+  <div class="nav-tab active" onclick="showPage('dashboard')" data-page="dashboard">📊 <span class="nav-label">Dashboard</span></div>
+  <div class="nav-tab" onclick="showPage('machines')" data-page="machines">🏭 <span class="nav-label">เครื่องจักร</span> <span class="badge" id="badge-machines">0</span></div>
+  <div class="nav-tab" onclick="showPage('log')" data-page="log">📋 <span class="nav-label">PM Log</span> <span class="badge" id="badge-log">0</span></div>
+  <div class="nav-tab" onclick="showPage('summary')" data-page="summary">📈 <span class="nav-label">สรุป</span></div>
+  <div class="nav-tab" onclick="showPage('settings')" data-page="settings">⚙️ <span class="nav-label">ตั้งค่า</span></div>
 </div>
 
 <!-- MAIN -->
@@ -2143,11 +2182,15 @@ let currentUserRole = null; // 'admin' | 'user' | 'pending' | 'blocked'
 const DEFAULT_ADMIN_EMAILS_KEY = 'pm_admin_emails';
 const FB_CONFIG_KEY = 'pm_firebase_config';
 
+const HARDCODED_ADMIN_EMAILS = ['esuf175@gmail.com'];
+
 function getAdminEmails() {
   try {
     const raw = localStorage.getItem(DEFAULT_ADMIN_EMAILS_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch(e) { return []; }
+    const saved = raw ? JSON.parse(raw) : [];
+    // Always include hardcoded admins
+    return [...new Set([...HARDCODED_ADMIN_EMAILS, ...saved])];
+  } catch(e) { return HARDCODED_ADMIN_EMAILS; }
 }
 
 function isAdminEmail(email) {
@@ -2389,6 +2432,7 @@ function enterApp() {
   // Show user in topbar
   const userEl = document.getElementById('topbar-user');
   userEl.style.display = 'flex';
+  userEl.style.alignItems = 'center';
   if (currentUser.photoURL) {
     document.getElementById('topbar-avatar').src = currentUser.photoURL;
     document.getElementById('topbar-avatar').style.display = '';
@@ -2417,6 +2461,8 @@ function enterApp() {
         if (badge) {
           badge.textContent = count;
           badge.style.display = count > 0 ? 'flex' : 'none';
+          badge.style.alignItems = 'center';
+          badge.style.justifyContent = 'center';
         }
         if (countBadge) countBadge.textContent = count;
       }, () => {});
