@@ -692,8 +692,17 @@
         Sign in with Google
       </button>
       <div id="login-error" style="margin-top:12px;font-size:12px;color:#da3633;text-align:center;display:none"></div>
-      <div id="login-pending" style="margin-top:12px;font-size:12px;color:#d29922;text-align:center;display:none">
-        ⏳ บัญชีของคุณรอการอนุมัติจาก Admin
+      <div id="login-pending" style="margin-top:12px;display:none">
+        <div style="background:#2d1b00;border:1px solid #d29922;border-radius:8px;padding:14px;text-align:center">
+          <div style="font-size:20px;margin-bottom:6px">⏳</div>
+          <div style="font-size:13px;font-weight:600;color:#d29922;margin-bottom:4px">รอการอนุมัติจาก Admin</div>
+          <div style="font-size:11px;color:#9198a1;margin-bottom:10px" id="pending-email-display"></div>
+          <div style="font-size:11px;color:#9198a1;margin-bottom:12px;line-height:1.6">Admin จะเห็นแจ้งเตือนใน Admin Panel<br>กด "รีเฟรชสถานะ" หลัง Admin Approve แล้ว</div>
+          <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+            <button onclick="recheckApproval()" style="background:#1f6feb;color:#fff;border:none;border-radius:6px;padding:7px 14px;font-size:12px;cursor:pointer;font-family:'IBM Plex Sans Thai',sans-serif">🔄 รีเฟรชสถานะ</button>
+            <button onclick="signOutFromPending()" style="background:none;border:1px solid #30363d;color:#9198a1;border-radius:6px;padding:7px 14px;font-size:12px;cursor:pointer;font-family:'IBM Plex Sans Thai',sans-serif">ออกจากระบบ</button>
+          </div>
+        </div>
       </div>
     </div>
     <div style="text-align:center;margin-top:16px">
@@ -725,8 +734,14 @@
 
         <!-- USERS TAB -->
         <div id="atab-users" class="admin-tab-content">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-            <div style="font-size:13px;color:#9198a1">ผู้ใช้งานทั้งหมดในระบบ</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-sm user-filter-btn active" data-filter="all" onclick="filterUserList('all',this)">ทั้งหมด</button>
+              <button class="btn btn-sm user-filter-btn" data-filter="pending" onclick="filterUserList('pending',this)" style="border-color:var(--accent);color:var(--accent2)">⏳ Pending <span id="pending-count-badge" style="background:var(--stop);color:#fff;font-size:10px;padding:1px 5px;border-radius:8px;margin-left:2px">0</span></button>
+              <button class="btn btn-sm user-filter-btn" data-filter="user" onclick="filterUserList('user',this)">✅ Users</button>
+              <button class="btn btn-sm user-filter-btn" data-filter="admin" onclick="filterUserList('admin',this)" style="border-color:var(--warn);color:var(--warn)">🛡️ Admin</button>
+              <button class="btn btn-sm user-filter-btn" data-filter="blocked" onclick="filterUserList('blocked',this)" style="border-color:var(--stop);color:var(--stop)">🚫 Blocked</button>
+            </div>
             <button class="btn btn-sm" onclick="loadUsers()">🔄 รีเฟรช</button>
           </div>
           <div id="admin-users-list"><div class="loading"><div class="spinner"></div>กำลังโหลด...</div></div>
@@ -847,8 +862,9 @@
   <div class="topbar-right">
     <span id="active-person-chip"></span>
     <button class="btn btn-sm" onclick="openModal('modal-person')">👤 เลือกผู้ตรวจ</button>
-    <div id="topbar-admin-btn" style="display:none">
+    <div id="topbar-admin-btn" style="display:none;position:relative">
       <button class="btn btn-sm" style="border-color:#d29922;color:#d29922" onclick="openAdminPanel()">🛡️ Admin</button>
+      <span id="pending-badge" style="display:none;position:absolute;top:-6px;right:-6px;background:#da3633;color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;border-radius:9px;display:none;align-items:center;justify-content:center;font-family:monospace;padding:0 4px;pointer-events:none">0</span>
     </div>
     <div id="topbar-user" style="display:none;align-items:center;gap:8px">
       <img id="topbar-avatar" width="28" height="28" style="border-radius:50%;border:2px solid #30363d">
@@ -2199,15 +2215,25 @@ function setupAuthListener() {
 }
 
 async function resolveUserRole(user) {
-  // Check admin emails list first
+  // 1) Admin email list → instant admin
   if (isAdminEmail(user.email)) {
     currentUserRole = 'admin';
     await ensureUserDoc(user, 'admin');
     enterApp();
     return;
   }
-  // Check Firestore user doc
   try {
+    // 2) Bootstrap: if no other users exist yet → first user becomes admin
+    const allSnap = await db.collection('users').get();
+    const otherUsers = allSnap.docs.filter(d => d.id !== user.uid);
+    if (otherUsers.length === 0) {
+      currentUserRole = 'admin';
+      await ensureUserDoc(user, 'admin');
+      toast('🎉 คุณเป็น Admin คนแรกของระบบ!', 'success');
+      enterApp();
+      return;
+    }
+    // 3) Check existing user doc
     const doc = await db.collection('users').doc(user.uid).get();
     if (doc.exists) {
       const data = doc.data();
@@ -2218,25 +2244,22 @@ async function resolveUserRole(user) {
         return;
       }
       if (currentUserRole === 'pending') {
-        document.getElementById('login-screen').style.display = 'flex';
-        document.getElementById('login-pending').style.display = 'block';
-        document.getElementById('btn-google-login').style.display = 'none';
+        showPendingScreen(user);
         addActivityLog(user.email, 'login_pending', 'รอการอนุมัติ');
+        startApprovalPolling(user);
         return;
       }
     } else {
-      // New user — create pending doc
+      // 4) New user → create pending doc
       await ensureUserDoc(user, 'pending');
       currentUserRole = 'pending';
-      document.getElementById('login-screen').style.display = 'flex';
-      document.getElementById('login-pending').style.display = 'block';
-      document.getElementById('btn-google-login').style.display = 'none';
-      addActivityLog(user.email, 'register', 'ลงทะเบียนใหม่ รอ Admin อนุมัติ');
+      showPendingScreen(user);
+      addActivityLog(user.email, 'register', 'สมัครใหม่ รอ Admin อนุมัติ');
+      startApprovalPolling(user);
       return;
     }
   } catch(e) {
     console.warn('Firestore error:', e);
-    // Fallback: allow if no DB
     currentUserRole = 'user';
   }
   enterApp();
@@ -2260,6 +2283,71 @@ async function ensureUserDoc(user, defaultRole) {
       await ref.update({ lastLogin: new Date().toISOString() });
     }
   } catch(e) { console.warn('ensureUserDoc error:', e); }
+}
+
+// ── PENDING SCREEN ──
+let _approvalTimer = null;
+
+function showPendingScreen(user) {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-pending').style.display = 'block';
+  document.getElementById('btn-google-login').style.display = 'none';
+  const emailEl = document.getElementById('pending-email-display');
+  if (emailEl) emailEl.textContent = user.email;
+}
+
+function startApprovalPolling(user) {
+  if (_approvalTimer) clearInterval(_approvalTimer);
+  _approvalTimer = setInterval(async () => {
+    try {
+      const doc = await db.collection('users').doc(user.uid).get();
+      if (doc.exists) {
+        const role = doc.data().role;
+        if (role && role !== 'pending' && role !== 'blocked') {
+          clearInterval(_approvalTimer);
+          currentUserRole = role;
+          toast('✅ บัญชีได้รับการอนุมัติแล้ว! กำลังเข้าสู่ระบบ...', 'success');
+          setTimeout(() => enterApp(), 1200);
+        }
+      }
+    } catch(e) {}
+  }, 15000); // poll every 15s
+}
+
+async function recheckApproval() {
+  if (!currentUser) return;
+  const btn = document.querySelector('[onclick="recheckApproval()"]');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังตรวจสอบ...'; }
+  try {
+    const doc = await db.collection('users').doc(currentUser.uid).get();
+    if (doc.exists) {
+      const role = doc.data().role;
+      if (role && role !== 'pending' && role !== 'blocked') {
+        currentUserRole = role;
+        if (_approvalTimer) clearInterval(_approvalTimer);
+        toast('✅ ได้รับการอนุมัติแล้ว!', 'success');
+        setTimeout(() => enterApp(), 800);
+        return;
+      } else if (role === 'blocked') {
+        toast('บัญชีถูกระงับ', 'error');
+        signOutFromPending();
+        return;
+      }
+    }
+    toast('⏳ ยังรอการอนุมัติอยู่', 'warn');
+  } catch(e) {
+    toast('ตรวจสอบไม่ได้: ' + e.message, 'error');
+  }
+  if (btn) { btn.disabled = false; btn.textContent = '🔄 รีเฟรชสถานะ'; }
+}
+
+async function signOutFromPending() {
+  if (_approvalTimer) clearInterval(_approvalTimer);
+  await firebase.auth().signOut();
+  document.getElementById('login-pending').style.display = 'none';
+  document.getElementById('btn-google-login').style.display = 'flex';
+  document.getElementById('btn-google-login').style.opacity = '1';
+  document.getElementById('btn-google-login').disabled = false;
 }
 
 function enterApp() {
@@ -2286,6 +2374,21 @@ function enterApp() {
 
   // Pull master data from Firestore
   pullMasterData();
+
+  // Admin: watch pending users realtime for badge
+  if (currentUserRole === 'admin' && db) {
+    db.collection('users').where('role','==','pending')
+      .onSnapshot(snap => {
+        const count = snap.size;
+        const badge = document.getElementById('pending-badge');
+        const countBadge = document.getElementById('pending-count-badge');
+        if (badge) {
+          badge.textContent = count;
+          badge.style.display = count > 0 ? 'flex' : 'none';
+        }
+        if (countBadge) countBadge.textContent = count;
+      }, () => {});
+  }
 }
 
 async function signInWithGoogle() {
@@ -2433,46 +2536,83 @@ function showAdminTab(name) {
 }
 
 // ── USERS ──
+let _allUsers = [];
+let _userFilter = 'all';
+
 async function loadUsers() {
   const el = document.getElementById('admin-users-list');
   el.innerHTML = '<div class="loading"><div class="spinner"></div>กำลังโหลด...</div>';
   if (!db) { el.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:12px">ไม่ได้เชื่อมต่อ Firestore</div>'; return; }
   try {
-    const snap = await db.collection('users').orderBy('createdAt','desc').get();
-    if (snap.empty) { el.innerHTML = '<div style="color:var(--text3);padding:12px;font-size:13px">ยังไม่มีผู้ใช้</div>'; return; }
-    el.innerHTML = snap.docs.map(d => {
-      const u = d.data();
-      const roleBadge = {
-        admin: '<span class="user-role-badge role-admin">ADMIN</span>',
-        user: '<span class="user-role-badge role-user">USER</span>',
-        pending: '<span class="user-role-badge role-pending">PENDING</span>',
-        blocked: '<span class="user-role-badge role-blocked">BLOCKED</span>',
-      }[u.role] || '<span class="user-role-badge role-pending">?</span>';
-      const lastLogin = u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('th-TH') : '—';
-      return `<div class="user-row">
-        ${u.photoURL ? `<img src="${escHtml(u.photoURL)}" class="user-avatar">` : '<div class="user-avatar" style="background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:16px">👤</div>'}
-        <div style="flex:1;min-width:0">
-          <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(u.name||u.email)}</div>
-          <div style="font-size:11px;color:var(--text3)">${escHtml(u.email)} · เข้าล่าสุด: ${lastLogin}</div>
-        </div>
-        ${roleBadge}
-        <div style="display:flex;gap:4px;flex-shrink:0">
-          ${u.role !== 'admin' ? `<button class="btn btn-sm" style="font-size:11px;border-color:var(--warn);color:var(--warn)" onclick="setUserRole('${u.uid}','admin')">Admin</button>` : ''}
-          ${u.role !== 'user' ? `<button class="btn btn-sm btn-success" style="font-size:11px" onclick="setUserRole('${u.uid}','user')">Approve</button>` : ''}
-          ${u.role !== 'blocked' ? `<button class="btn btn-sm btn-danger" style="font-size:11px" onclick="setUserRole('${u.uid}','blocked')">Block</button>` : `<button class="btn btn-sm" style="font-size:11px" onclick="setUserRole('${u.uid}','user')">Unblock</button>`}
-        </div>
-      </div>`;
-    }).join('');
+    const snap = await db.collection('users').get();
+    // Sort: pending first, then by createdAt desc
+    _allUsers = snap.docs.map(d => d.data()).sort((a, b) => {
+      const order = { pending: 0, blocked: 1, user: 2, admin: 3 };
+      const oa = order[a.role] ?? 2, ob = order[b.role] ?? 2;
+      if (oa !== ob) return oa - ob;
+      return (b.createdAt || '').localeCompare(a.createdAt || '');
+    });
+    // Update pending count badge
+    const pendingCount = _allUsers.filter(u => u.role === 'pending').length;
+    const countBadge = document.getElementById('pending-count-badge');
+    if (countBadge) countBadge.textContent = pendingCount;
+    renderUserList();
   } catch(e) {
     el.innerHTML = `<div style="color:var(--stop);font-size:12px;padding:12px">❌ ${e.message}</div>`;
   }
 }
 
+function filterUserList(filter, btn) {
+  _userFilter = filter;
+  document.querySelectorAll('.user-filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderUserList();
+}
+
+function renderUserList() {
+  const el = document.getElementById('admin-users-list');
+  const users = _userFilter === 'all' ? _allUsers : _allUsers.filter(u => u.role === _userFilter);
+  if (users.length === 0) {
+    el.innerHTML = '<div style="color:var(--text3);padding:16px;font-size:13px;text-align:center">ไม่มีผู้ใช้ในกลุ่มนี้</div>';
+    return;
+  }
+  const roleBadgeMap = {
+    admin: '<span class="user-role-badge role-admin">ADMIN</span>',
+    user: '<span class="user-role-badge role-user">USER</span>',
+    pending: '<span class="user-role-badge role-pending">⏳ PENDING</span>',
+    blocked: '<span class="user-role-badge role-blocked">🚫 BLOCKED</span>',
+  };
+  el.innerHTML = users.map(u => {
+    const roleBadge = roleBadgeMap[u.role] || roleBadgeMap.pending;
+    const lastLogin = u.lastLogin ? new Date(u.lastLogin).toLocaleString('th-TH',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
+    const createdAt = u.createdAt ? new Date(u.createdAt).toLocaleDateString('th-TH') : '—';
+    const isPending = u.role === 'pending';
+    return `<div class="user-row" style="${isPending ? 'border-color:var(--accent);background:rgba(31,111,235,0.05)' : ''}">
+      ${u.photoURL ? `<img src="${escHtml(u.photoURL)}" class="user-avatar">` : `<div class="user-avatar" style="background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:16px">${u.role==='admin'?'👨‍💼':'👤'}</div>`}
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(u.name||u.email)}</div>
+        <div style="font-size:11px;color:var(--text3)">${escHtml(u.email)}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px">สมัคร: ${createdAt} · เข้าล่าสุด: ${lastLogin}</div>
+      </div>
+      ${roleBadge}
+      <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;flex-shrink:0;min-width:0">
+        ${u.role !== 'admin' ? `<button class="btn btn-sm" style="font-size:11px;border-color:var(--warn);color:var(--warn)" onclick="setUserRole('${u.uid}','admin')">🛡️ Admin</button>` : ''}
+        ${u.role !== 'user' && u.role !== 'admin' ? `<button class="btn btn-sm btn-success" style="font-size:11px" onclick="setUserRole('${u.uid}','user')">✅ Approve</button>` : ''}
+        ${u.role === 'user' ? `<button class="btn btn-sm" style="font-size:11px;border-color:var(--warn);color:var(--warn)" onclick="setUserRole('${u.uid}','admin')">Promote Admin</button>` : ''}
+        ${u.role !== 'blocked' && u.uid !== currentUser?.uid ? `<button class="btn btn-sm btn-danger" style="font-size:11px" onclick="setUserRole('${u.uid}','blocked')">🚫 Block</button>` : ''}
+        ${u.role === 'blocked' ? `<button class="btn btn-sm btn-success" style="font-size:11px" onclick="setUserRole('${u.uid}','user')">Unblock</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
 async function setUserRole(uid, role) {
   if (!db) return;
+  const label = {admin:'Admin', user:'User', blocked:'Blocked'}[role] || role;
+  if (!confirm(`เปลี่ยนสิทธิ์เป็น ${label}?`)) return;
   try {
     await db.collection('users').doc(uid).update({ role });
-    toast(`เปลี่ยน Role เป็น ${role} ✅`, 'success');
+    toast(`เปลี่ยนเป็น ${label} ✅`, 'success');
     addActivityLog(currentUser?.email, 'set_role', `uid:${uid} → ${role}`);
     loadUsers();
   } catch(e) { toast('เปลี่ยน Role ไม่ได้: ' + e.message, 'error'); }
