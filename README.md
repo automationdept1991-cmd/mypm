@@ -107,3 +107,88 @@ https://[username].github.io/machine-pm/
 - GitHub Token เก็บใน localStorage ของอุปกรณ์เท่านั้น ไม่ส่งไปที่อื่น
 - ใช้ Private Gist — เฉพาะคนที่มี Token เท่านั้นที่เข้าถึงได้
 - แนะนำให้ตั้ง Token expiration (30/90 วัน) และ revoke เมื่อไม่ใช้แล้ว
+
+---
+
+## 🔐 ตั้งค่า Firebase (Google Login + Admin)
+
+### ขั้นที่ 1 — สร้าง Firebase Project
+1. ไปที่ [console.firebase.google.com](https://console.firebase.google.com)
+2. กด **Add project** → ตั้งชื่อ เช่น `machine-pm`
+3. เลือก **Continue** (ไม่ต้องเปิด Analytics)
+
+### ขั้นที่ 2 — เปิด Authentication
+1. เมนูซ้าย → **Authentication** → **Get started**
+2. แท็บ **Sign-in method** → เลือก **Google** → เปิดใช้งาน → **Save**
+
+### ขั้นที่ 3 — เปิด Firestore
+1. เมนูซ้าย → **Firestore Database** → **Create database**
+2. เลือก **Start in production mode** → เลือก Region ใกล้ที่สุด (asia-southeast1)
+3. ไปที่แท็บ **Rules** แล้วแก้เป็น:
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users can read/write their own doc
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    // Only authenticated users can read config & logs
+    match /config/{doc} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    match /pmLogs/{doc} {
+      allow read, write: if request.auth != null;
+    }
+    match /activityLogs/{doc} {
+      allow read: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow create: if request.auth != null;
+    }
+  }
+}
+```
+
+4. กด **Publish**
+
+### ขั้นที่ 4 — เพิ่ม Web App
+1. Project Overview → กด **</>** (Web)
+2. ตั้งชื่อ App เช่น `pm-web`
+3. คัดลอก **firebaseConfig** ที่ได้
+
+### ขั้นที่ 5 — เพิ่ม Authorized Domain
+1. Authentication → **Settings** → **Authorized domains**
+2. กด **Add domain** → ใส่ `[username].github.io`
+
+### ขั้นที่ 6 — กรอก Config ในแอป
+เปิดแอปครั้งแรก จะเห็นหน้า "ตั้งค่า Firebase" ให้กรอก:
+- `apiKey`
+- `authDomain`
+- `projectId`
+- `storageBucket`
+- `messagingSenderId`
+- `appId`
+
+กด **บันทึกและเข้าสู่ระบบ**
+
+### ขั้นที่ 7 — ตั้ง Admin คนแรก
+1. Login ด้วย Google account ของตัวเองก่อน (จะเป็น "pending")
+2. ไปที่ Firestore Console → collection `users` → หา document ของตัวเอง
+3. แก้ field `role` จาก `pending` เป็น `admin`
+4. หรือ: กด "ตั้งค่า Firebase" → เพิ่ม email ของตัวเองใน **Admin Emails** แล้ว login ใหม่
+
+---
+
+## 🛡️ สิทธิ์การใช้งาน
+
+| Role | สิ่งที่ทำได้ |
+|------|-------------|
+| **Admin** | เข้า Admin Panel, จัดการ User, เพิ่ม/ลบ/แก้ไข Machine & Person, ดู Activity Log, ตั้งค่า Gist Token |
+| **User** | บันทึก PM, ดู Dashboard, Export ข้อมูล |
+| **Pending** | รอ Admin Approve ก่อนเข้าใช้งาน |
+| **Blocked** | ถูกระงับ ไม่สามารถเข้าระบบได้ |
