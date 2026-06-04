@@ -12,6 +12,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Machine PM System</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -612,6 +616,28 @@
   .alert-warn { background: var(--warn-bg); border-color: var(--warn); color: var(--warn); }
   .alert-danger { background: var(--stop-bg); border-color: var(--stop); color: var(--stop); }
 
+  /* ── ADMIN TABS ── */
+  .admin-tab { transition: all 0.15s; }
+  .admin-tab:hover { color: var(--text) !important; }
+  .admin-tab.active { color: var(--accent2) !important; border-bottom-color: var(--accent2) !important; }
+
+  /* ── USER CARD ── */
+  .user-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 8px;
+    border: 1px solid var(--border); margin-bottom: 6px;
+    background: var(--bg);
+  }
+  .user-avatar { width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--border); flex-shrink:0; }
+  .user-role-badge {
+    font-size: 10px; padding: 2px 7px; border-radius: 10px;
+    font-family: var(--mono); font-weight: 600;
+  }
+  .role-admin { background: rgba(210,153,34,0.15); color: var(--warn); border: 1px solid var(--warn); }
+  .role-user { background: var(--bg4); color: var(--text3); border: 1px solid var(--border); }
+  .role-pending { background: rgba(31,111,235,0.1); color: var(--accent2); border: 1px solid var(--accent); }
+  .role-blocked { background: var(--stop-bg); color: var(--stop); border: 1px solid var(--stop); }
+
   /* ── SCROLLBAR ── */
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
@@ -620,242 +646,197 @@
   /* ── HIDDEN VIDEO ── */
   #hidden-video { display: none; }
   #snap-canvas { display: none; }
-
-  /* ══════════════════════════════
-     MOBILE ENHANCEMENTS
-  ══════════════════════════════ */
-
-  /* Bottom nav for mobile */
-  .bottom-nav {
-    display: none;
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    background: var(--bg2);
-    border-top: 1px solid var(--border);
-    z-index: 100;
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  .bottom-nav-inner {
-    display: flex;
-    align-items: stretch;
-    height: 58px;
-  }
-  .bottom-nav-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    cursor: pointer;
-    color: var(--text3);
-    font-size: 10px;
-    font-weight: 500;
-    border: none;
-    background: none;
-    font-family: var(--font);
-    transition: color 0.15s;
-    -webkit-tap-highlight-color: transparent;
-    padding: 0;
-  }
-  .bottom-nav-item .nav-icon { font-size: 20px; line-height: 1; }
-  .bottom-nav-item.active { color: var(--accent2); }
-  .bottom-nav-item:active { background: var(--bg3); }
-
-  /* FAB — floating PM button */
-  .fab {
-    display: none;
-    position: fixed;
-    bottom: 78px;
-    right: 18px;
-    width: 56px; height: 56px;
-    border-radius: 50%;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    font-size: 26px;
-    cursor: pointer;
-    box-shadow: 0 4px 20px rgba(31,111,235,0.5);
-    z-index: 101;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.15s, background 0.15s;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .fab:active { transform: scale(0.93); background: var(--accent2); }
-
-  /* Admin PIN Modal */
-  .pin-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.85);
-    z-index: 500;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    backdrop-filter: blur(8px);
-  }
-  .pin-overlay.open { display: flex; }
-  .pin-box {
-    background: var(--bg2);
-    border: 1px solid var(--border2);
-    border-radius: 16px;
-    padding: 32px 28px;
-    width: 100%;
-    max-width: 360px;
-    text-align: center;
-    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
-  }
-  .pin-icon { font-size: 40px; margin-bottom: 12px; }
-  .pin-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
-  .pin-subtitle { font-size: 13px; color: var(--text3); margin-bottom: 24px; line-height: 1.5; }
-  .pin-dots {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    margin-bottom: 24px;
-  }
-  .pin-dot {
-    width: 14px; height: 14px;
-    border-radius: 50%;
-    border: 2px solid var(--border2);
-    background: transparent;
-    transition: all 0.15s;
-  }
-  .pin-dot.filled { background: var(--accent2); border-color: var(--accent2); }
-  .pin-dot.error { background: var(--stop); border-color: var(--stop); }
-  .pin-keypad {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-bottom: 16px;
-  }
-  .pin-key {
-    height: 56px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: var(--bg3);
-    color: var(--text);
-    font-size: 20px;
-    font-weight: 500;
-    cursor: pointer;
-    font-family: var(--mono);
-    transition: all 0.1s;
-    -webkit-tap-highlight-color: transparent;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .pin-key:active { background: var(--bg4); transform: scale(0.95); }
-  .pin-key.del { font-size: 18px; }
-  .pin-key.empty { background: transparent; border-color: transparent; cursor: default; }
-  .pin-error-msg {
-    font-size: 12px;
-    color: var(--stop);
-    margin-bottom: 12px;
-    min-height: 18px;
-  }
-  .pin-forgot { font-size: 12px; color: var(--text3); cursor: pointer; text-decoration: underline; }
-  .pin-forgot:hover { color: var(--text2); }
-
-  /* Admin badge in topbar */
-  .admin-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: rgba(31,111,235,0.15);
-    border: 1px solid var(--accent);
-    border-radius: 20px;
-    padding: 3px 10px;
-    font-size: 11px;
-    color: var(--accent2);
-    font-weight: 600;
-    cursor: pointer;
-  }
-  .admin-badge:hover { background: rgba(31,111,235,0.25); }
-
-  /* Settings lock overlay */
-  .settings-lock {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 80px 20px;
-    text-align: center;
-    gap: 12px;
-    color: var(--text3);
-  }
-  .settings-lock .lock-icon { font-size: 56px; margin-bottom: 8px; }
-  .settings-lock h3 { font-size: 16px; font-weight: 600; color: var(--text2); }
-  .settings-lock p { font-size: 13px; line-height: 1.6; }
-
-  @media (max-width: 640px) {
-    /* Show bottom nav, hide top nav tabs */
-    .nav-tabs { display: none; }
-    .bottom-nav { display: flex; flex-direction: column; }
-    .fab { display: flex; }
-
-    /* Topbar adjustments */
-    .topbar { padding: 0 14px; height: 52px; }
-    .topbar-right .btn { display: none; } /* hide settings btn, use bottom nav */
-    #active-person-chip { display: none; } /* hide chip, shown elsewhere */
-
-    /* Main padding + bottom nav space */
-    .main { padding: 14px 14px 80px; }
-
-    /* Machine grid full width */
-    .machine-grid { grid-template-columns: 1fr; }
-
-    /* Bigger touch targets for machine cards */
-    .machine-card-header { padding: 14px 16px; }
-    .machine-body { padding: 10px 16px; }
-    .machine-footer { padding: 10px 16px; }
-    .machine-name { font-size: 15px; }
-
-    /* Stats row 2 cols */
-    .stats-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .stat-num { font-size: 28px; }
-
-    /* Filter bar scroll */
-    .filter-bar { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
-    .filter-bar::-webkit-scrollbar { display: none; }
-    .filter-input { min-width: 160px; }
-
-    /* Buttons bigger */
-    .btn { padding: 8px 16px; font-size: 14px; }
-    .btn-sm { padding: 7px 13px; font-size: 13px; }
-
-    /* Section header stack */
-    .section-header { flex-direction: column; align-items: flex-start; gap: 10px; }
-    .section-header > div:last-child { width: 100%; display: flex; flex-wrap: wrap; gap: 8px; }
-
-    /* Table horizontal scroll */
-    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    table { min-width: 600px; }
-
-    /* Modal full width */
-    .modal { max-width: 100% !important; margin: 0; border-radius: 16px 16px 0 0; }
-    .modal-overlay { align-items: flex-end; padding: 0; }
-    .modal { max-height: 92vh; }
-
-    /* Camera bigger */
-    #camera-preview { height: 260px; }
-
-    /* Setup grid single col */
-    .setup-grid { grid-template-columns: 1fr; }
-
-    /* Status radio bigger */
-    .status-radio-label { padding: 14px 8px; font-size: 13px; }
-    .status-radio-label .icon { font-size: 24px; }
-
-    /* Toast position */
-    .toast-container { bottom: 74px; right: 12px; left: 12px; }
-    .toast { max-width: 100%; }
-
-    /* Pin box full */
-    .pin-box { max-width: 100%; border-radius: 16px; }
-  }
 </style>
 </head>
 <body>
+
+<!-- ═══════════ FIREBASE CONFIG NOTICE ═══════════ -->
+<div id="firebase-config-notice" style="display:none;position:fixed;inset:0;background:#0d1117;z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px;max-width:480px;width:100%">
+    <div style="font-size:22px;font-weight:700;margin-bottom:6px;color:#e6edf3">⚙️ ตั้งค่า Firebase</div>
+    <div style="font-size:13px;color:#9198a1;margin-bottom:20px;line-height:1.7">กรอก Firebase Config จาก Project ของคุณ<br>ดูคู่มือใน README.md สำหรับวิธีสร้าง Firebase Project</div>
+    <div style="display:grid;gap:10px">
+      <input id="fc-apiKey" class="form-input" placeholder="apiKey: AIzaSy...">
+      <input id="fc-authDomain" class="form-input" placeholder="authDomain: myapp.firebaseapp.com">
+      <input id="fc-projectId" class="form-input" placeholder="projectId: my-pm-system">
+      <input id="fc-storageBucket" class="form-input" placeholder="storageBucket: myapp.appspot.com">
+      <input id="fc-messagingSenderId" class="form-input" placeholder="messagingSenderId: 123456789">
+      <input id="fc-appId" class="form-input" placeholder="appId: 1:123:web:abc">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-primary" style="flex:1" onclick="saveFirebaseConfig()">💾 บันทึกและเข้าสู่ระบบ</button>
+    </div>
+    <div id="fc-error" style="margin-top:10px;font-size:12px;color:#da3633;display:none"></div>
+  </div>
+</div>
+
+<!-- ═══════════ LOGIN SCREEN ═══════════ -->
+<div id="login-screen" style="display:none;position:fixed;inset:0;background:#0d1117;z-index:1000;align-items:center;justify-content:center;padding:20px">
+  <div style="width:100%;max-width:380px">
+    <!-- Logo -->
+    <div style="text-align:center;margin-bottom:32px">
+      <div style="font-size:48px;margin-bottom:8px">🏭</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;color:#388bfd;letter-spacing:2px">PM/SYS</div>
+      <div style="font-size:13px;color:#9198a1;margin-top:4px">Machine Preventive Maintenance</div>
+    </div>
+    <!-- Login card -->
+    <div style="background:#161b22;border:1px solid #30363d;border-radius:12px;padding:28px">
+      <div style="font-size:16px;font-weight:600;margin-bottom:6px;color:#e6edf3">เข้าสู่ระบบ</div>
+      <div style="font-size:12px;color:#9198a1;margin-bottom:20px">ใช้บัญชี Google ขององค์กร</div>
+      <button onclick="signInWithGoogle()" id="btn-google-login"
+        style="width:100%;display:flex;align-items:center;justify-content:center;gap:12px;
+               background:#fff;color:#3c4043;border:1px solid #dadce0;border-radius:8px;
+               padding:12px 16px;font-size:14px;font-weight:500;cursor:pointer;
+               font-family:'IBM Plex Sans Thai',sans-serif;transition:all 0.15s">
+        <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/><path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/><path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/><path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/></svg>
+        Sign in with Google
+      </button>
+      <div id="login-error" style="margin-top:12px;font-size:12px;color:#da3633;text-align:center;display:none"></div>
+      <div id="login-pending" style="margin-top:12px;font-size:12px;color:#d29922;text-align:center;display:none">
+        ⏳ บัญชีของคุณรอการอนุมัติจาก Admin
+      </div>
+    </div>
+    <div style="text-align:center;margin-top:16px">
+      <button onclick="showFirebaseConfig()" style="background:none;border:none;color:#656d76;font-size:11px;cursor:pointer;font-family:'IBM Plex Sans Thai',sans-serif">⚙️ ตั้งค่า Firebase Config</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ ADMIN PANEL ═══════════ -->
+<div id="admin-panel" style="display:none">
+  <div class="modal-overlay open" id="modal-admin" style="z-index:500">
+    <div class="modal" style="max-width:780px;max-height:92vh">
+      <div class="modal-header" style="background:#161b22">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:18px">🛡️</span>
+          <div class="modal-title">Admin Panel</div>
+        </div>
+        <button class="modal-close" onclick="closeAdminPanel()">✕</button>
+      </div>
+      <!-- Admin Tabs -->
+      <div style="display:flex;border-bottom:1px solid #30363d;background:#161b22;position:sticky;top:53px;z-index:1">
+        <div class="admin-tab active" onclick="showAdminTab('users')" data-atab="users" style="padding:10px 16px;cursor:pointer;font-size:13px;font-weight:500;color:#9198a1;border-bottom:2px solid transparent;transition:all 0.15s">👥 จัดการ Users</div>
+        <div class="admin-tab" onclick="showAdminTab('machines-admin')" data-atab="machines-admin" style="padding:10px 16px;cursor:pointer;font-size:13px;font-weight:500;color:#9198a1;border-bottom:2px solid transparent;transition:all 0.15s">🏭 เครื่องจักร</div>
+        <div class="admin-tab" onclick="showAdminTab('persons-admin')" data-atab="persons-admin" style="padding:10px 16px;cursor:pointer;font-size:13px;font-weight:500;color:#9198a1;border-bottom:2px solid transparent;transition:all 0.15s">👤 บุคลากร</div>
+        <div class="admin-tab" onclick="showAdminTab('config-admin')" data-atab="config-admin" style="padding:10px 16px;cursor:pointer;font-size:13px;font-weight:500;color:#9198a1;border-bottom:2px solid transparent;transition:all 0.15s">⚙️ ตั้งค่า</div>
+        <div class="admin-tab" onclick="showAdminTab('logs-admin')" data-atab="logs-admin" style="padding:10px 16px;cursor:pointer;font-size:13px;font-weight:500;color:#9198a1;border-bottom:2px solid transparent;transition:all 0.15s">📋 Activity Log</div>
+      </div>
+      <div class="modal-body" style="padding:16px">
+
+        <!-- USERS TAB -->
+        <div id="atab-users" class="admin-tab-content">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="font-size:13px;color:#9198a1">ผู้ใช้งานทั้งหมดในระบบ</div>
+            <button class="btn btn-sm" onclick="loadUsers()">🔄 รีเฟรช</button>
+          </div>
+          <div id="admin-users-list"><div class="loading"><div class="spinner"></div>กำลังโหลด...</div></div>
+        </div>
+
+        <!-- MACHINES ADMIN TAB -->
+        <div id="atab-machines-admin" class="admin-tab-content" style="display:none">
+          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+            <button class="btn btn-sm" onclick="document.getElementById('admin-machine-excel').click()">📥 Import Machine Excel</button>
+            <input type="file" id="admin-machine-excel" accept=".xlsx,.xls" style="display:none" onchange="importMachineExcel(this);pushMasterData()">
+            <button class="btn btn-primary btn-sm" onclick="openAddMachineModal()">+ เพิ่มเครื่องจักร</button>
+          </div>
+          <div id="admin-machines-table"></div>
+        </div>
+
+        <!-- PERSONS ADMIN TAB -->
+        <div id="atab-persons-admin" class="admin-tab-content" style="display:none">
+          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+            <button class="btn btn-sm" onclick="document.getElementById('admin-person-excel').click()">📥 Import Person Excel</button>
+            <input type="file" id="admin-person-excel" accept=".xlsx,.xls" style="display:none" onchange="importPersonExcel(this);pushMasterData()">
+            <button class="btn btn-primary btn-sm" onclick="openAddPersonModal()">+ เพิ่มบุคลากร</button>
+          </div>
+          <div id="admin-persons-table"></div>
+        </div>
+
+        <!-- CONFIG TAB -->
+        <div id="atab-config-admin" class="admin-tab-content" style="display:none">
+          <div style="display:grid;gap:14px">
+            <div class="card">
+              <div class="card-title">☁️ GitHub Gist (ส่งออกข้อมูล)</div>
+              <div class="form-group">
+                <label class="form-label">GitHub Token (กลาง)</label>
+                <input type="password" class="form-input" id="admin-gist-token" placeholder="ghp_xxxx">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Gist ID</label>
+                <input type="text" class="form-input" id="admin-gist-id" placeholder="gist id">
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-primary btn-sm" onclick="saveAdminGistConfig()">💾 บันทึก</button>
+                <button class="btn btn-sm" onclick="createNewGist()">✨ สร้าง Gist ใหม่</button>
+                <button class="btn btn-sm" onclick="pushToGist()">☁️ Push ข้อมูล</button>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title">🔐 Admin Emails</div>
+              <div style="font-size:12px;color:#9198a1;margin-bottom:8px">Email ที่มีสิทธิ์ Admin (1 บรรทัด 1 email)</div>
+              <textarea class="form-textarea" id="admin-emails-list" style="min-height:100px;font-family:var(--mono);font-size:12px"></textarea>
+              <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="saveAdminEmails()">💾 บันทึก Admin Emails</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACTIVITY LOG TAB -->
+        <div id="atab-logs-admin" class="admin-tab-content" style="display:none">
+          <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+            <div style="font-size:13px;color:#9198a1">บันทึกกิจกรรมทั้งหมด</div>
+            <button class="btn btn-sm btn-success" onclick="exportActivityLog()">📥 Export</button>
+          </div>
+          <div id="admin-activity-log"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT MACHINE MODAL -->
+<div class="modal-overlay" id="modal-add-machine">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header"><div class="modal-title" id="add-machine-title">เพิ่มเครื่องจักร</div><button class="modal-close" onclick="closeModal('modal-add-machine')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-machine-idx">
+      <div class="form-group"><label class="form-label">Tag *</label><input class="form-input" id="m-tag" placeholder="MC-001"></div>
+      <div class="form-group"><label class="form-label">Description *</label><input class="form-input" id="m-desc" placeholder="เครื่องกลึง CNC"></div>
+      <div class="form-group"><label class="form-label">Type</label><input class="form-input" id="m-type" placeholder="CNC Lathe"></div>
+      <div class="form-group"><label class="form-label">Location</label><input class="form-input" id="m-loc" placeholder="Building A"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-add-machine')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveMachineEntry()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT PERSON MODAL -->
+<div class="modal-overlay" id="modal-add-person">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header"><div class="modal-title" id="add-person-title">เพิ่มบุคลากร</div><button class="modal-close" onclick="closeModal('modal-add-person')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-person-idx">
+      <div class="form-group"><label class="form-label">ID</label><input class="form-input" id="p-id" placeholder="EMP001"></div>
+      <div class="form-group"><label class="form-label">Name *</label><input class="form-input" id="p-name" placeholder="สมชาย ใจดี"></div>
+      <div class="form-group"><label class="form-label">Shift</label>
+        <select class="form-select" id="p-shift">
+          <option value="">—</option><option>A</option><option>B</option><option>C</option><option>Day</option><option>Night</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Level</label>
+        <select class="form-select" id="p-level">
+          <option value="">—</option><option>Technician</option><option>Senior Technician</option><option>Supervisor</option><option>Engineer</option><option>Manager</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-add-person')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="savePersonEntry()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
 
 <!-- TOPBAR -->
 <div class="topbar">
@@ -865,9 +846,15 @@
   </div>
   <div class="topbar-right">
     <span id="active-person-chip"></span>
-    <div id="admin-topbar-badge" style="display:none" class="admin-badge" onclick="adminLogout()" title="คลิกเพื่อออกจากโหมด Admin">🔑 Admin</div>
     <button class="btn btn-sm" onclick="openModal('modal-person')">👤 เลือกผู้ตรวจ</button>
-    <button class="btn btn-sm" onclick="requestAdminThenSettings()">⚙️ ตั้งค่า</button>
+    <div id="topbar-admin-btn" style="display:none">
+      <button class="btn btn-sm" style="border-color:#d29922;color:#d29922" onclick="openAdminPanel()">🛡️ Admin</button>
+    </div>
+    <div id="topbar-user" style="display:none;align-items:center;gap:8px">
+      <img id="topbar-avatar" width="28" height="28" style="border-radius:50%;border:2px solid #30363d">
+      <span id="topbar-username" style="font-size:12px;color:#9198a1;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+      <button class="btn btn-sm btn-danger" onclick="signOut()" style="padding:3px 8px">ออก</button>
+    </div>
   </div>
 </div>
 
@@ -877,7 +864,7 @@
   <div class="nav-tab" onclick="showPage('machines')" data-page="machines">🏭 เครื่องจักร <span class="badge" id="badge-machines">0</span></div>
   <div class="nav-tab" onclick="showPage('log')" data-page="log">📋 บันทึก PM <span class="badge" id="badge-log">0</span></div>
   <div class="nav-tab" onclick="showPage('summary')" data-page="summary">📈 สรุปผล</div>
-  <div class="nav-tab" onclick="requestAdminThenSettings()" data-page="settings">⚙️ ตั้งค่า</div>
+  <div class="nav-tab" onclick="showPage('settings')" data-page="settings">⚙️ ตั้งค่า</div>
 </div>
 
 <!-- MAIN -->
@@ -1043,96 +1030,69 @@
 
   <!-- ═══════════ SETTINGS ═══════════ -->
   <div class="page" id="page-settings">
-    <!-- Lock screen shown when not admin -->
-    <div id="settings-lock-screen" class="settings-lock">
-      <div class="lock-icon">🔒</div>
-      <h3>ต้องการสิทธิ์ Admin</h3>
-      <p>หน้าตั้งค่านี้ถูกป้องกันด้วย PIN<br>เฉพาะผู้ดูแลระบบเท่านั้นที่สามารถเข้าได้</p>
-      <button class="btn btn-primary" onclick="requestAdminThenSettings()">🔑 ใส่ PIN เข้าสู่ระบบ</button>
+    <div class="section-title" style="margin-bottom:16px">⚙️ ตั้งค่าระบบ</div>
+
+    <div class="setup-grid">
+      <!-- GIST -->
+      <div class="setup-step">
+        <div class="setup-step-num">1</div>
+        <h3>GitHub Gist Token</h3>
+        <p>สร้าง Personal Access Token ที่ github.com/settings/tokens (ต้องการ scope: gist) แล้วใส่ด้านล่าง</p>
+        <div class="form-group">
+          <label class="form-label">GitHub Token</label>
+          <input type="password" class="form-input" id="gist-token" placeholder="ghp_xxxxxxxxxxxx">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gist ID (ปล่อยว่างถ้าต้องการสร้างใหม่)</label>
+          <input type="text" class="form-input" id="gist-id" placeholder="กรอกหลังสร้าง Gist แล้ว">
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-primary" onclick="saveGistConfig()">💾 บันทึก Token</button>
+          <button class="btn" onclick="testGistConnection()">🔗 ทดสอบ</button>
+          <button class="btn" onclick="createNewGist()">✨ สร้าง Gist ใหม่</button>
+        </div>
+        <div id="gist-status" style="margin-top:10px;font-size:12px;color:var(--text3)"></div>
+      </div>
+
+      <!-- IMPORT PERSON EXCEL -->
+      <div class="setup-step">
+        <div class="setup-step-num">2</div>
+        <h3>นำเข้าข้อมูลบุคลากร (Excel)</h3>
+        <p>ไฟล์ Excel ต้องมีคอลัมน์: <strong>ID, Name, Shift, Level</strong></p>
+        <button class="btn" onclick="document.getElementById('import-person-excel').click()">📥 นำเข้า Person Excel</button>
+        <input type="file" id="import-person-excel" accept=".xlsx,.xls" style="display:none" onchange="importPersonExcel(this)">
+        <div id="person-import-status" style="margin-top:10px;font-size:12px;color:var(--text3)"></div>
+        <div id="person-list-preview" style="margin-top:10px"></div>
+      </div>
+
+      <!-- IMPORT MACHINE EXCEL -->
+      <div class="setup-step">
+        <div class="setup-step-num">3</div>
+        <h3>นำเข้าข้อมูลเครื่องจักร (Excel)</h3>
+        <p>ไฟล์ Excel ต้องมีคอลัมน์: <strong>Tag, Description, Type, Location</strong></p>
+        <button class="btn" onclick="document.getElementById('import-machine-excel2').click()">📥 นำเข้า Machine Excel</button>
+        <input type="file" id="import-machine-excel2" accept=".xlsx,.xls" style="display:none" onchange="importMachineExcel(this)">
+        <div id="machine-import-status" style="margin-top:10px;font-size:12px;color:var(--text3)"></div>
+      </div>
+
+      <!-- SYNC -->
+      <div class="setup-step">
+        <div class="setup-step-num">4</div>
+        <h3>ซิงค์ข้อมูล</h3>
+        <p>ดึงหรืออัพโหลดข้อมูลจาก GitHub Gist เพื่อให้ทุกอุปกรณ์เห็นข้อมูลเดียวกัน</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="pushToGist()">☁️ Push ขึ้น Gist</button>
+          <button class="btn" onclick="syncFromGist()">⬇️ Pull จาก Gist</button>
+        </div>
+        <div id="sync-status" style="margin-top:10px;font-size:12px;color:var(--text3)"></div>
+      </div>
     </div>
 
-    <!-- Actual settings, shown when admin is unlocked -->
-    <div id="settings-content" style="display:none">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
-        <div class="section-title">⚙️ ตั้งค่าระบบ</div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <div class="admin-badge">🔑 Admin Mode</div>
-          <button class="btn btn-sm btn-danger" onclick="adminLogout()">🔒 ล็อคตั้งค่า</button>
-        </div>
-      </div>
-
-      <!-- Change PIN section -->
-      <div class="card" style="margin-bottom:16px;border-color:var(--accent)">
-        <div class="card-title">🔐 Admin PIN</div>
-        <p style="font-size:12px;color:var(--text2);margin-bottom:12px">
-          เปลี่ยน PIN สำหรับป้องกันหน้าตั้งค่า (PIN 4 หลัก)
-        </p>
-        <button class="btn btn-sm" onclick="openPinSetOverlay()">🔑 เปลี่ยน / ตั้ง PIN ใหม่</button>
-        <div id="pin-change-status" style="margin-top:8px;font-size:12px;color:var(--text3)"></div>
-      </div>
-
-      <div class="setup-grid">
-        <!-- GIST -->
-        <div class="setup-step">
-          <div class="setup-step-num">1</div>
-          <h3>GitHub Gist Token</h3>
-          <p>สร้าง Personal Access Token ที่ github.com/settings/tokens (ต้องการ scope: gist) แล้วใส่ด้านล่าง</p>
-          <div class="form-group">
-            <label class="form-label">GitHub Token</label>
-            <input type="password" class="form-input" id="gist-token" placeholder="ghp_xxxxxxxxxxxx">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Gist ID (ปล่อยว่างถ้าต้องการสร้างใหม่)</label>
-            <input type="text" class="form-input" id="gist-id" placeholder="กรอกหลังสร้าง Gist แล้ว">
-          </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn btn-primary" onclick="saveGistConfig()">💾 บันทึก Token</button>
-            <button class="btn" onclick="testGistConnection()">🔗 ทดสอบ</button>
-            <button class="btn" onclick="createNewGist()">✨ สร้าง Gist ใหม่</button>
-          </div>
-          <div id="gist-status" style="margin-top:10px;font-size:12px;color:var(--text3)"></div>
-        </div>
-
-        <!-- IMPORT PERSON EXCEL -->
-        <div class="setup-step">
-          <div class="setup-step-num">2</div>
-          <h3>นำเข้าข้อมูลบุคลากร (Excel)</h3>
-          <p>ไฟล์ Excel ต้องมีคอลัมน์: <strong>ID, Name, Shift, Level</strong></p>
-          <button class="btn" onclick="document.getElementById('import-person-excel').click()">📥 นำเข้า Person Excel</button>
-          <input type="file" id="import-person-excel" accept=".xlsx,.xls" style="display:none" onchange="importPersonExcel(this)">
-          <div id="person-import-status" style="margin-top:10px;font-size:12px;color:var(--text3)"></div>
-          <div id="person-list-preview" style="margin-top:10px"></div>
-        </div>
-
-        <!-- IMPORT MACHINE EXCEL -->
-        <div class="setup-step">
-          <div class="setup-step-num">3</div>
-          <h3>นำเข้าข้อมูลเครื่องจักร (Excel)</h3>
-          <p>ไฟล์ Excel ต้องมีคอลัมน์: <strong>Tag, Description, Type, Location</strong></p>
-          <button class="btn" onclick="document.getElementById('import-machine-excel2').click()">📥 นำเข้า Machine Excel</button>
-          <input type="file" id="import-machine-excel2" accept=".xlsx,.xls" style="display:none" onchange="importMachineExcel(this)">
-          <div id="machine-import-status" style="margin-top:10px;font-size:12px;color:var(--text3)"></div>
-        </div>
-
-        <!-- SYNC -->
-        <div class="setup-step">
-          <div class="setup-step-num">4</div>
-          <h3>ซิงค์ข้อมูล</h3>
-          <p>ดึงหรืออัพโหลดข้อมูลจาก GitHub Gist เพื่อให้ทุกอุปกรณ์เห็นข้อมูลเดียวกัน</p>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn btn-primary" onclick="pushToGist()">☁️ Push ขึ้น Gist</button>
-            <button class="btn" onclick="syncFromGist()">⬇️ Pull จาก Gist</button>
-          </div>
-          <div id="sync-status" style="margin-top:10px;font-size:12px;color:var(--text3)"></div>
-        </div>
-      </div>
-
-      <hr class="divider">
-      <div class="card" style="border-color:var(--stop);max-width:400px">
-        <div class="card-title" style="color:var(--stop)">⚠️ Danger Zone</div>
-        <p style="font-size:12px;color:var(--text2);margin-bottom:12px">ล้างข้อมูลทั้งหมดในอุปกรณ์นี้ (ข้อมูลบน Gist ยังอยู่)</p>
-        <button class="btn btn-danger btn-sm" onclick="clearLocalData()">🗑️ ล้างข้อมูล Local</button>
-      </div>
+    <hr class="divider">
+    <div class="card" style="border-color:var(--stop);max-width:400px">
+      <div class="card-title" style="color:var(--stop)">⚠️ Danger Zone</div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:12px">ล้างข้อมูลทั้งหมดในอุปกรณ์นี้ (ข้อมูลบน Gist ยังอยู่)</p>
+      <button class="btn btn-danger btn-sm" onclick="clearLocalData()">🗑️ ล้างข้อมูล Local</button>
     </div>
   </div>
 
@@ -1246,96 +1206,6 @@
 <!-- Hidden canvas for camera -->
 <canvas id="snap-canvas"></canvas>
 
-<!-- ═══════════ BOTTOM NAV (mobile) ═══════════ -->
-<nav class="bottom-nav">
-  <div class="bottom-nav-inner">
-    <button class="bottom-nav-item active" onclick="showPage('dashboard')" data-bnav="dashboard">
-      <span class="nav-icon">📊</span>Dashboard
-    </button>
-    <button class="bottom-nav-item" onclick="showPage('machines')" data-bnav="machines">
-      <span class="nav-icon">🏭</span>เครื่องจักร
-    </button>
-    <button class="bottom-nav-item" onclick="showPage('log')" data-bnav="log">
-      <span class="nav-icon">📋</span>บันทึก
-    </button>
-    <button class="bottom-nav-item" onclick="showPage('summary')" data-bnav="summary">
-      <span class="nav-icon">📈</span>สรุปผล
-    </button>
-    <button class="bottom-nav-item" onclick="requestAdminThenSettings()" data-bnav="settings">
-      <span class="nav-icon">⚙️</span>ตั้งค่า
-    </button>
-  </div>
-</nav>
-
-<!-- FAB — quick PM entry -->
-<button class="fab" onclick="openPmModal(null)" title="บันทึก PM">＋</button>
-
-<!-- ═══════════ ADMIN PIN MODAL ═══════════ -->
-<div class="pin-overlay" id="pin-overlay">
-  <div class="pin-box">
-    <div class="pin-icon">🔐</div>
-    <div class="pin-title">Admin เท่านั้น</div>
-    <div class="pin-subtitle" id="pin-subtitle">ใส่รหัส PIN เพื่อเข้าหน้าตั้งค่า<br>หรือตั้งรหัสใหม่หากยังไม่มี</div>
-    <div class="pin-dots" id="pin-dots">
-      <div class="pin-dot" id="pd0"></div>
-      <div class="pin-dot" id="pd1"></div>
-      <div class="pin-dot" id="pd2"></div>
-      <div class="pin-dot" id="pd3"></div>
-    </div>
-    <div class="pin-error-msg" id="pin-error"></div>
-    <div class="pin-keypad">
-      <button class="pin-key" onclick="pinPress('1')">1</button>
-      <button class="pin-key" onclick="pinPress('2')">2</button>
-      <button class="pin-key" onclick="pinPress('3')">3</button>
-      <button class="pin-key" onclick="pinPress('4')">4</button>
-      <button class="pin-key" onclick="pinPress('5')">5</button>
-      <button class="pin-key" onclick="pinPress('6')">6</button>
-      <button class="pin-key" onclick="pinPress('7')">7</button>
-      <button class="pin-key" onclick="pinPress('8')">8</button>
-      <button class="pin-key" onclick="pinPress('9')">9</button>
-      <button class="pin-key empty"></button>
-      <button class="pin-key" onclick="pinPress('0')">0</button>
-      <button class="pin-key del" onclick="pinDel()">⌫</button>
-    </div>
-    <div class="pin-error-msg" id="pin-attempt-msg"></div>
-    <button class="btn" style="width:100%;margin-top:4px" onclick="closePinOverlay()">ยกเลิก</button>
-    <div style="margin-top:14px">
-      <span class="pin-forgot" onclick="showPinReset()">ลืม PIN / รีเซ็ต?</span>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════ ADMIN PIN SET MODAL ═══════════ -->
-<div class="pin-overlay" id="pin-set-overlay">
-  <div class="pin-box">
-    <div class="pin-icon">🛡️</div>
-    <div class="pin-title" id="pin-set-title">ตั้ง Admin PIN ใหม่</div>
-    <div class="pin-subtitle" id="pin-set-subtitle">ใส่ PIN 4 หลัก (ครั้งที่ 1)</div>
-    <div class="pin-dots" id="pin-set-dots">
-      <div class="pin-dot" id="psd0"></div>
-      <div class="pin-dot" id="psd1"></div>
-      <div class="pin-dot" id="psd2"></div>
-      <div class="pin-dot" id="psd3"></div>
-    </div>
-    <div class="pin-error-msg" id="pin-set-error"></div>
-    <div class="pin-keypad">
-      <button class="pin-key" onclick="pinSetPress('1')">1</button>
-      <button class="pin-key" onclick="pinSetPress('2')">2</button>
-      <button class="pin-key" onclick="pinSetPress('3')">3</button>
-      <button class="pin-key" onclick="pinSetPress('4')">4</button>
-      <button class="pin-key" onclick="pinSetPress('5')">5</button>
-      <button class="pin-key" onclick="pinSetPress('6')">6</button>
-      <button class="pin-key" onclick="pinSetPress('7')">7</button>
-      <button class="pin-key" onclick="pinSetPress('8')">8</button>
-      <button class="pin-key" onclick="pinSetPress('9')">9</button>
-      <button class="pin-key empty"></button>
-      <button class="pin-key" onclick="pinSetPress('0')">0</button>
-      <button class="pin-key del" onclick="pinSetDel()">⌫</button>
-    </div>
-    <button class="btn" style="width:100%;margin-top:8px" onclick="closePinSetOverlay()">ยกเลิก</button>
-  </div>
-</div>
-
 <script>
 // ═══════════════════════════════════════
 // STATE
@@ -1350,8 +1220,6 @@ let state = {
   statusFilter: 'all',
   currentPhotos: [],
   cameraStream: null,
-  adminPin: '',        // hashed PIN stored in localStorage
-  isAdminUnlocked: false, // session-only flag
 };
 
 // ═══════════════════════════════════════
@@ -1362,10 +1230,17 @@ function init() {
   updateTopbarDate();
   renderAll();
   setInterval(updateTopbarDate, 60000);
-  // Set default summary month
   const now = new Date();
   document.getElementById('summary-month').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   document.getElementById('log-filter-date').value = now.toISOString().split('T')[0];
+
+  // Boot Firebase
+  const cfg = getSavedFirebaseConfig();
+  if (cfg && cfg.apiKey) {
+    initFirebase(cfg);
+  } else {
+    showFirebaseConfig();
+  }
 }
 
 function loadLocal() {
@@ -1379,7 +1254,6 @@ function loadLocal() {
       state.activePerson = loaded.activePerson || null;
       state.gistToken = loaded.gistToken || '';
       state.gistId = loaded.gistId || '';
-      state.adminPin = loaded.adminPin || '';
     }
   } catch(e) { console.warn('loadLocal failed', e); }
 }
@@ -1392,7 +1266,6 @@ function saveLocal() {
     activePerson: state.activePerson,
     gistToken: state.gistToken,
     gistId: state.gistId,
-    adminPin: state.adminPin,
   }));
 }
 
@@ -1410,46 +1283,18 @@ function updateTopbarDate() {
 function showPage(name) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.bottom-nav-item').forEach(t => t.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
   document.querySelector(`[data-page="${name}"]`)?.classList.add('active');
-  document.querySelector(`[data-bnav="${name}"]`)?.classList.add('active');
 
   if (name === 'dashboard') renderDashboard();
   if (name === 'machines') renderMachines();
   if (name === 'log') renderLog();
   if (name === 'summary') renderSummary();
   if (name === 'settings') {
-    renderSettingsPage();
-    if (state.isAdminUnlocked) {
-      document.getElementById('gist-token').value = state.gistToken;
-      document.getElementById('gist-id').value = state.gistId;
-      renderPersonPreview();
-    }
+    document.getElementById('gist-token').value = state.gistToken;
+    document.getElementById('gist-id').value = state.gistId;
+    renderPersonPreview();
   }
-}
-
-function renderSettingsPage() {
-  const lock = document.getElementById('settings-lock-screen');
-  const content = document.getElementById('settings-content');
-  if (state.isAdminUnlocked) {
-    lock.style.display = 'none';
-    content.style.display = 'block';
-    document.getElementById('admin-topbar-badge').style.display = 'flex';
-  } else {
-    lock.style.display = 'flex';
-    content.style.display = 'none';
-    document.getElementById('admin-topbar-badge').style.display = 'none';
-  }
-}
-
-function requestAdminThenSettings() {
-  if (state.isAdminUnlocked) {
-    showPage('settings');
-    return;
-  }
-  // Open PIN entry
-  openPinOverlay();
 }
 
 // ═══════════════════════════════════════
@@ -1808,6 +1653,7 @@ async function savePmRecord() {
     remark,
     photos: [...state.currentPhotos],
     timestamp: new Date().toISOString(),
+    userEmail: currentUser?.email || '',
   };
 
   state.pmLogs.push(record);
@@ -1817,7 +1663,12 @@ async function savePmRecord() {
   closeModal('modal-pm');
   toast('บันทึก PM แล้ว ✅', 'success');
 
-  // Push to Gist if configured
+  addActivityLog(currentUser?.email, 'pm_record', `${tag} → ${status}`);
+
+  // Push to Firestore
+  pushPmLogToFirestore(record);
+
+  // Push photos to Gist if configured
   if (state.gistToken && state.gistId) {
     pushToGist(true);
   }
@@ -2207,16 +2058,7 @@ function exportReport() {
     const sc = {good:'good', warning:'warn', stopped:'stop'}[l.status]||'';
     html += `<tr><td>${t}</td><td>${l.machineTag}</td><td>${m.description||''}</td><td>${m.type||''}</td><td>${m.location||''}</td><td class="${sc}">${statusLabel(l.status)}</td><td>${l.inspector||''}</td><td>${l.remark||''}</td></tr>`;
   });
-  html += `</tbody></table><${'script'}>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').then(reg => {
-      console.log('SW registered:', reg.scope);
-    }).catch(err => console.warn('SW failed:', err));
-  });
-}
-</${'script'}>
-</body></html>`;
+  html += ['<\/tbody><\/table><\/body><\/html>'].join('');
 
   const blob = new Blob([html], {type:'text/html;charset=utf-8;'});
   const a = document.createElement('a');
@@ -2263,192 +2105,553 @@ document.querySelectorAll('.modal-overlay').forEach(o => {
 });
 
 // ═══════════════════════════════════════
-// ADMIN PIN SYSTEM
+// FIREBASE CONFIG & AUTH
 // ═══════════════════════════════════════
-let pinBuffer = '';
-let pinSetBuffer = '';
-let pinSetStep = 1;
-let pinSetFirst = '';
-let pinAttempts = 0;
-const PIN_MAX_ATTEMPTS = 5;
+let firebaseApp = null;
+let db = null;
+let currentUser = null;
+let currentUserRole = null; // 'admin' | 'user' | 'pending' | 'blocked'
 
-// Simple hash (non-crypto, for UX pin protection)
-function hashPin(pin) {
-  let h = 0;
-  for (let i = 0; i < pin.length; i++) {
-    h = (Math.imul(31, h) + pin.charCodeAt(i)) | 0;
+const DEFAULT_ADMIN_EMAILS_KEY = 'pm_admin_emails';
+const FB_CONFIG_KEY = 'pm_firebase_config';
+
+function getAdminEmails() {
+  try {
+    const raw = localStorage.getItem(DEFAULT_ADMIN_EMAILS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch(e) { return []; }
+}
+
+function isAdminEmail(email) {
+  return getAdminEmails().map(e => e.toLowerCase()).includes((email||'').toLowerCase());
+}
+
+function getSavedFirebaseConfig() {
+  try {
+    const raw = localStorage.getItem(FB_CONFIG_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch(e) { return null; }
+}
+
+function showFirebaseConfig() {
+  const cfg = getSavedFirebaseConfig() || {};
+  document.getElementById('fc-apiKey').value = cfg.apiKey || '';
+  document.getElementById('fc-authDomain').value = cfg.authDomain || '';
+  document.getElementById('fc-projectId').value = cfg.projectId || '';
+  document.getElementById('fc-storageBucket').value = cfg.storageBucket || '';
+  document.getElementById('fc-messagingSenderId').value = cfg.messagingSenderId || '';
+  document.getElementById('fc-appId').value = cfg.appId || '';
+  document.getElementById('firebase-config-notice').style.display = 'flex';
+  document.getElementById('login-screen').style.display = 'none';
+}
+
+function saveFirebaseConfig() {
+  const cfg = {
+    apiKey: document.getElementById('fc-apiKey').value.trim(),
+    authDomain: document.getElementById('fc-authDomain').value.trim(),
+    projectId: document.getElementById('fc-projectId').value.trim(),
+    storageBucket: document.getElementById('fc-storageBucket').value.trim(),
+    messagingSenderId: document.getElementById('fc-messagingSenderId').value.trim(),
+    appId: document.getElementById('fc-appId').value.trim(),
+  };
+  if (!cfg.apiKey || !cfg.authDomain || !cfg.projectId) {
+    const errEl = document.getElementById('fc-error');
+    errEl.textContent = '⚠️ กรุณากรอก apiKey, authDomain, projectId อย่างน้อย';
+    errEl.style.display = 'block';
+    return;
   }
-  return 'pm_' + Math.abs(h).toString(36) + pin.length;
+  localStorage.setItem(FB_CONFIG_KEY, JSON.stringify(cfg));
+  document.getElementById('firebase-config-notice').style.display = 'none';
+  initFirebase(cfg);
 }
 
-function openPinOverlay() {
-  pinBuffer = '';
-  pinAttempts = 0;
-  document.getElementById('pin-error').textContent = '';
-  document.getElementById('pin-attempt-msg').textContent = '';
-  updatePinDots('pin-dots', 'pd', pinBuffer);
-
-  // If no PIN set, go straight to set-PIN flow
-  if (!state.adminPin) {
-    document.getElementById('pin-subtitle').textContent = 'ยังไม่มี PIN — กำลังนำไปตั้งค่า PIN ใหม่';
-    setTimeout(() => { closePinOverlay(); openPinSetOverlay(); }, 900);
-  }
-  document.getElementById('pin-overlay').classList.add('open');
-}
-
-function closePinOverlay() {
-  document.getElementById('pin-overlay').classList.remove('open');
-  pinBuffer = '';
-}
-
-function pinPress(d) {
-  if (pinBuffer.length >= 4) return;
-  pinBuffer += d;
-  updatePinDots('pin-dots', 'pd', pinBuffer);
-  if (pinBuffer.length === 4) {
-    setTimeout(() => verifyPin(), 120);
-  }
-}
-
-function pinDel() {
-  pinBuffer = pinBuffer.slice(0, -1);
-  updatePinDots('pin-dots', 'pd', pinBuffer);
-  document.getElementById('pin-error').textContent = '';
-}
-
-function verifyPin() {
-  if (hashPin(pinBuffer) === state.adminPin) {
-    // Correct
-    pinAttempts = 0;
-    state.isAdminUnlocked = true;
-    closePinOverlay();
-    showPage('settings');
-    toast('เข้าสู่โหมด Admin แล้ว 🔑', 'success');
-  } else {
-    // Wrong
-    pinAttempts++;
-    pinBuffer = '';
-    const remaining = PIN_MAX_ATTEMPTS - pinAttempts;
-    // Flash error
-    for (let i = 0; i < 4; i++) {
-      const dot = document.getElementById('pd' + i);
-      dot.classList.add('error');
-      setTimeout(() => dot.classList.remove('error'), 600);
-    }
-    updatePinDots('pin-dots', 'pd', pinBuffer);
-    if (pinAttempts >= PIN_MAX_ATTEMPTS) {
-      document.getElementById('pin-error').textContent = '❌ PIN ผิดเกิน ' + PIN_MAX_ATTEMPTS + ' ครั้ง';
-      document.getElementById('pin-attempt-msg').textContent = 'กรุณารอ 30 วินาที';
-      // Temporarily lock
-      const keys = document.querySelectorAll('#pin-overlay .pin-key');
-      keys.forEach(k => k.disabled = true);
-      setTimeout(() => {
-        keys.forEach(k => k.disabled = false);
-        pinAttempts = 0;
-        document.getElementById('pin-error').textContent = '';
-        document.getElementById('pin-attempt-msg').textContent = '';
-      }, 30000);
+function initFirebase(cfg) {
+  try {
+    if (firebaseApp) {
+      // Already initialized — reinitialize
+      firebase.app().delete().then(() => {
+        firebaseApp = firebase.initializeApp(cfg);
+        db = firebase.firestore();
+        setupAuthListener();
+      });
     } else {
-      document.getElementById('pin-error').textContent = `❌ PIN ไม่ถูกต้อง (เหลือ ${remaining} ครั้ง)`;
+      firebaseApp = firebase.initializeApp(cfg);
+      db = firebase.firestore();
+      setupAuthListener();
+    }
+  } catch(e) {
+    console.warn('Firebase init error:', e);
+    showLoginScreen();
+  }
+}
+
+function setupAuthListener() {
+  firebase.auth().onAuthStateChanged(async user => {
+    if (user) {
+      currentUser = user;
+      await resolveUserRole(user);
+    } else {
+      currentUser = null;
+      currentUserRole = null;
+      showLoginScreen();
+    }
+  });
+}
+
+async function resolveUserRole(user) {
+  // Check admin emails list first
+  if (isAdminEmail(user.email)) {
+    currentUserRole = 'admin';
+    await ensureUserDoc(user, 'admin');
+    enterApp();
+    return;
+  }
+  // Check Firestore user doc
+  try {
+    const doc = await db.collection('users').doc(user.uid).get();
+    if (doc.exists) {
+      const data = doc.data();
+      currentUserRole = data.role || 'pending';
+      if (currentUserRole === 'blocked') {
+        showLoginError('บัญชีของคุณถูกระงับการใช้งาน กรุณาติดต่อ Admin');
+        firebase.auth().signOut();
+        return;
+      }
+      if (currentUserRole === 'pending') {
+        document.getElementById('login-screen').style.display = 'flex';
+        document.getElementById('login-pending').style.display = 'block';
+        document.getElementById('btn-google-login').style.display = 'none';
+        addActivityLog(user.email, 'login_pending', 'รอการอนุมัติ');
+        return;
+      }
+    } else {
+      // New user — create pending doc
+      await ensureUserDoc(user, 'pending');
+      currentUserRole = 'pending';
+      document.getElementById('login-screen').style.display = 'flex';
+      document.getElementById('login-pending').style.display = 'block';
+      document.getElementById('btn-google-login').style.display = 'none';
+      addActivityLog(user.email, 'register', 'ลงทะเบียนใหม่ รอ Admin อนุมัติ');
+      return;
+    }
+  } catch(e) {
+    console.warn('Firestore error:', e);
+    // Fallback: allow if no DB
+    currentUserRole = 'user';
+  }
+  enterApp();
+}
+
+async function ensureUserDoc(user, defaultRole) {
+  try {
+    const ref = db.collection('users').doc(user.uid);
+    const doc = await ref.get();
+    if (!doc.exists) {
+      await ref.set({
+        uid: user.uid,
+        email: user.email,
+        name: user.displayName || '',
+        photoURL: user.photoURL || '',
+        role: defaultRole,
+        createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
+      });
+    } else {
+      await ref.update({ lastLogin: new Date().toISOString() });
+    }
+  } catch(e) { console.warn('ensureUserDoc error:', e); }
+}
+
+function enterApp() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('firebase-config-notice').style.display = 'none';
+
+  // Show user in topbar
+  const userEl = document.getElementById('topbar-user');
+  userEl.style.display = 'flex';
+  if (currentUser.photoURL) {
+    document.getElementById('topbar-avatar').src = currentUser.photoURL;
+    document.getElementById('topbar-avatar').style.display = '';
+  } else {
+    document.getElementById('topbar-avatar').style.display = 'none';
+  }
+  document.getElementById('topbar-username').textContent = currentUser.displayName || currentUser.email;
+
+  // Show admin button if admin
+  if (currentUserRole === 'admin') {
+    document.getElementById('topbar-admin-btn').style.display = 'flex';
+  }
+
+  addActivityLog(currentUser.email, 'login', 'เข้าสู่ระบบสำเร็จ');
+
+  // Pull master data from Firestore
+  pullMasterData();
+}
+
+async function signInWithGoogle() {
+  const btn = document.getElementById('btn-google-login');
+  btn.style.opacity = '0.7';
+  btn.disabled = true;
+  document.getElementById('login-error').style.display = 'none';
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    await firebase.auth().signInWithPopup(provider);
+  } catch(e) {
+    btn.style.opacity = '1';
+    btn.disabled = false;
+    if (e.code !== 'auth/popup-closed-by-user') {
+      showLoginError('เข้าสู่ระบบไม่ได้: ' + (e.message || e.code));
     }
   }
 }
 
-function updatePinDots(containerId, prefix, buf) {
-  for (let i = 0; i < 4; i++) {
-    const dot = document.getElementById(prefix + i);
-    dot.classList.toggle('filled', i < buf.length);
-    dot.classList.remove('error');
-  }
+async function signOut() {
+  if (!confirm('ออกจากระบบ?')) return;
+  addActivityLog(currentUser?.email, 'logout', 'ออกจากระบบ');
+  await firebase.auth().signOut();
+  document.getElementById('topbar-user').style.display = 'none';
+  document.getElementById('topbar-admin-btn').style.display = 'none';
+  currentUser = null;
+  currentUserRole = null;
+  showLoginScreen();
 }
 
-function adminLogout() {
-  state.isAdminUnlocked = false;
-  document.getElementById('admin-topbar-badge').style.display = 'none';
-  renderSettingsPage();
-  toast('ออกจากโหมด Admin แล้ว 🔒', 'warn');
+function showLoginScreen() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-pending').style.display = 'none';
+  document.getElementById('btn-google-login').style.display = 'flex';
+  document.getElementById('btn-google-login').style.opacity = '1';
+  document.getElementById('btn-google-login').disabled = false;
 }
 
-// ── PIN SET FLOW ──
-function openPinSetOverlay() {
-  pinSetBuffer = '';
-  pinSetStep = 1;
-  pinSetFirst = '';
-  document.getElementById('pin-set-title').textContent = 'ตั้ง Admin PIN ใหม่';
-  document.getElementById('pin-set-subtitle').textContent = 'ใส่ PIN 4 หลัก (ครั้งที่ 1)';
-  document.getElementById('pin-set-error').textContent = '';
-  updatePinDots('pin-set-dots', 'psd', pinSetBuffer);
-  document.getElementById('pin-set-overlay').classList.add('open');
+function showLoginError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = msg;
+  el.style.display = 'block';
 }
 
-function closePinSetOverlay() {
-  document.getElementById('pin-set-overlay').classList.remove('open');
-  pinSetBuffer = '';
-  pinSetStep = 1;
-  pinSetFirst = '';
-}
-
-function pinSetPress(d) {
-  if (pinSetBuffer.length >= 4) return;
-  pinSetBuffer += d;
-  updatePinDots('pin-set-dots', 'psd', pinSetBuffer);
-  if (pinSetBuffer.length === 4) {
-    setTimeout(() => confirmPinSet(), 120);
-  }
-}
-
-function pinSetDel() {
-  pinSetBuffer = pinSetBuffer.slice(0, -1);
-  updatePinDots('pin-set-dots', 'psd', pinSetBuffer);
-  document.getElementById('pin-set-error').textContent = '';
-}
-
-function confirmPinSet() {
-  if (pinSetStep === 1) {
-    pinSetFirst = pinSetBuffer;
-    pinSetBuffer = '';
-    pinSetStep = 2;
-    document.getElementById('pin-set-subtitle').textContent = 'ยืนยัน PIN อีกครั้ง (ครั้งที่ 2)';
-    document.getElementById('pin-set-error').textContent = '';
-    updatePinDots('pin-set-dots', 'psd', pinSetBuffer);
-  } else {
-    if (pinSetBuffer === pinSetFirst) {
-      state.adminPin = hashPin(pinSetBuffer);
+// ═══════════════════════════════════════
+// FIRESTORE MASTER DATA SYNC
+// ═══════════════════════════════════════
+async function pullMasterData() {
+  if (!db) return;
+  try {
+    const doc = await db.collection('config').doc('master').get();
+    if (doc.exists) {
+      const d = doc.data();
+      if (d.machines && d.machines.length) state.machines = d.machines;
+      if (d.persons && d.persons.length) state.persons = d.persons;
+      if (d.gistToken) state.gistToken = d.gistToken;
+      if (d.gistId) state.gistId = d.gistId;
       saveLocal();
-      closePinSetOverlay();
-      toast('ตั้ง PIN สำเร็จแล้ว 🔐', 'success');
-      const statusEl = document.getElementById('pin-change-status');
-      if (statusEl) statusEl.textContent = '✅ เปลี่ยน PIN แล้ว';
-      // Auto-unlock after setting
-      state.isAdminUnlocked = true;
-      renderSettingsPage();
-    } else {
-      pinSetBuffer = '';
-      pinSetFirst = '';
-      pinSetStep = 1;
-      document.getElementById('pin-set-subtitle').textContent = 'ใส่ PIN 4 หลัก (ครั้งที่ 1)';
-      document.getElementById('pin-set-error').textContent = '❌ PIN ไม่ตรงกัน กรุณาใส่ใหม่';
-      updatePinDots('pin-set-dots', 'psd', pinSetBuffer);
+      renderAll();
+      toast('ซิงค์ข้อมูลจาก Firestore ✅', 'success');
     }
+    // Pull PM logs
+    const logsSnap = await db.collection('pmLogs').orderBy('timestamp','desc').limit(500).get();
+    if (!logsSnap.empty) {
+      const remoteLogs = logsSnap.docs.map(d => d.data());
+      // Merge: keep local only records not in remote
+      const remoteIds = new Set(remoteLogs.map(l => l.id));
+      const localOnly = state.pmLogs.filter(l => !remoteIds.has(l.id));
+      state.pmLogs = [...remoteLogs, ...localOnly];
+      saveLocal();
+      renderAll();
+    }
+  } catch(e) { console.warn('pullMasterData error:', e); }
+}
+
+async function pushMasterData() {
+  if (!db || currentUserRole !== 'admin') return;
+  try {
+    await db.collection('config').doc('master').set({
+      machines: state.machines,
+      persons: state.persons,
+      gistToken: state.gistToken,
+      gistId: state.gistId,
+      updatedAt: new Date().toISOString(),
+      updatedBy: currentUser?.email || '',
+    });
+    toast('บันทึก Master Data ขึ้น Firestore ✅', 'success');
+    addActivityLog(currentUser?.email, 'push_master', `machines:${state.machines.length} persons:${state.persons.length}`);
+  } catch(e) {
+    toast('Push Firestore ไม่ได้: ' + e.message, 'error');
   }
 }
 
-function showPinReset() {
-  closePinOverlay();
-  // Show a confirm with master override hint
-  const ans = prompt('ระบุ "RESET" เพื่อล้าง PIN (ต้องแก้ไขโดยตรงใน localStorage หรือให้ผู้ดูแลรีเซ็ต):');
-  if (ans === 'RESET') {
-    state.adminPin = '';
-    saveLocal();
-    toast('ล้าง PIN แล้ว — กรุณาตั้ง PIN ใหม่', 'warn');
-    openPinSetOverlay();
-  } else if (ans !== null) {
-    toast('คำตอบไม่ถูกต้อง', 'error');
-  }
+async function pushPmLogToFirestore(record) {
+  if (!db) return;
+  try {
+    await db.collection('pmLogs').doc(record.id).set({
+      ...record,
+      photos: [], // don't store base64 in Firestore — keep in Gist
+      userEmail: currentUser?.email || '',
+    });
+  } catch(e) { console.warn('pushPmLog error:', e); }
 }
 
 // ═══════════════════════════════════════
-// BOOT
+// ACTIVITY LOG
+// ═══════════════════════════════════════
+function addActivityLog(email, action, detail) {
+  try {
+    const logs = JSON.parse(localStorage.getItem('pm_activity_log') || '[]');
+    logs.unshift({ email, action, detail, timestamp: new Date().toISOString() });
+    localStorage.setItem('pm_activity_log', JSON.stringify(logs.slice(0, 500)));
+    // Push to Firestore
+    if (db) {
+      db.collection('activityLogs').add({ email, action, detail, timestamp: new Date().toISOString() }).catch(() => {});
+    }
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════
+// ADMIN PANEL
+// ═══════════════════════════════════════
+function openAdminPanel() {
+  if (currentUserRole !== 'admin') { toast('ไม่มีสิทธิ์ Admin', 'error'); return; }
+  document.getElementById('admin-panel').style.display = 'block';
+  document.getElementById('admin-gist-token').value = state.gistToken;
+  document.getElementById('admin-gist-id').value = state.gistId;
+  document.getElementById('admin-emails-list').value = getAdminEmails().join('\n');
+  loadUsers();
+  renderAdminMachines();
+  renderAdminPersons();
+  loadActivityLog();
+}
+
+function closeAdminPanel() {
+  document.getElementById('admin-panel').style.display = 'none';
+}
+
+function showAdminTab(name) {
+  document.querySelectorAll('.admin-tab-content').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('atab-' + name).style.display = 'block';
+  document.querySelector(`[data-atab="${name}"]`).classList.add('active');
+}
+
+// ── USERS ──
+async function loadUsers() {
+  const el = document.getElementById('admin-users-list');
+  el.innerHTML = '<div class="loading"><div class="spinner"></div>กำลังโหลด...</div>';
+  if (!db) { el.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:12px">ไม่ได้เชื่อมต่อ Firestore</div>'; return; }
+  try {
+    const snap = await db.collection('users').orderBy('createdAt','desc').get();
+    if (snap.empty) { el.innerHTML = '<div style="color:var(--text3);padding:12px;font-size:13px">ยังไม่มีผู้ใช้</div>'; return; }
+    el.innerHTML = snap.docs.map(d => {
+      const u = d.data();
+      const roleBadge = {
+        admin: '<span class="user-role-badge role-admin">ADMIN</span>',
+        user: '<span class="user-role-badge role-user">USER</span>',
+        pending: '<span class="user-role-badge role-pending">PENDING</span>',
+        blocked: '<span class="user-role-badge role-blocked">BLOCKED</span>',
+      }[u.role] || '<span class="user-role-badge role-pending">?</span>';
+      const lastLogin = u.lastLogin ? new Date(u.lastLogin).toLocaleDateString('th-TH') : '—';
+      return `<div class="user-row">
+        ${u.photoURL ? `<img src="${escHtml(u.photoURL)}" class="user-avatar">` : '<div class="user-avatar" style="background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:16px">👤</div>'}
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(u.name||u.email)}</div>
+          <div style="font-size:11px;color:var(--text3)">${escHtml(u.email)} · เข้าล่าสุด: ${lastLogin}</div>
+        </div>
+        ${roleBadge}
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          ${u.role !== 'admin' ? `<button class="btn btn-sm" style="font-size:11px;border-color:var(--warn);color:var(--warn)" onclick="setUserRole('${u.uid}','admin')">Admin</button>` : ''}
+          ${u.role !== 'user' ? `<button class="btn btn-sm btn-success" style="font-size:11px" onclick="setUserRole('${u.uid}','user')">Approve</button>` : ''}
+          ${u.role !== 'blocked' ? `<button class="btn btn-sm btn-danger" style="font-size:11px" onclick="setUserRole('${u.uid}','blocked')">Block</button>` : `<button class="btn btn-sm" style="font-size:11px" onclick="setUserRole('${u.uid}','user')">Unblock</button>`}
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = `<div style="color:var(--stop);font-size:12px;padding:12px">❌ ${e.message}</div>`;
+  }
+}
+
+async function setUserRole(uid, role) {
+  if (!db) return;
+  try {
+    await db.collection('users').doc(uid).update({ role });
+    toast(`เปลี่ยน Role เป็น ${role} ✅`, 'success');
+    addActivityLog(currentUser?.email, 'set_role', `uid:${uid} → ${role}`);
+    loadUsers();
+  } catch(e) { toast('เปลี่ยน Role ไม่ได้: ' + e.message, 'error'); }
+}
+
+// ── ADMIN MACHINES TABLE ──
+function renderAdminMachines() {
+  const el = document.getElementById('admin-machines-table');
+  if (state.machines.length === 0) {
+    el.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:12px">ยังไม่มีเครื่องจักร — Import Excel หรือ เพิ่มด้วยตนเอง</div>';
+    return;
+  }
+  el.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Tag</th><th>Description</th><th>Type</th><th>Location</th><th></th></tr></thead>
+    <tbody>${state.machines.map((m,i) => `<tr>
+      <td><span class="machine-tag">${escHtml(m.tag)}</span></td>
+      <td>${escHtml(m.description)}</td>
+      <td style="color:var(--text2)">${escHtml(m.type)}</td>
+      <td style="color:var(--text2)">${escHtml(m.location)}</td>
+      <td style="display:flex;gap:4px">
+        <button class="btn btn-sm" onclick="editMachine(${i})" style="font-size:11px">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteMachine(${i})" style="font-size:11px">🗑️</button>
+      </td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function openAddMachineModal(idx) {
+  document.getElementById('edit-machine-idx').value = idx !== undefined ? idx : '';
+  document.getElementById('add-machine-title').textContent = idx !== undefined ? 'แก้ไขเครื่องจักร' : 'เพิ่มเครื่องจักร';
+  const m = idx !== undefined ? state.machines[idx] : {};
+  document.getElementById('m-tag').value = m.tag || '';
+  document.getElementById('m-desc').value = m.description || '';
+  document.getElementById('m-type').value = m.type || '';
+  document.getElementById('m-loc').value = m.location || '';
+  openModal('modal-add-machine');
+}
+
+function editMachine(i) { openAddMachineModal(i); }
+
+function saveMachineEntry() {
+  const tag = document.getElementById('m-tag').value.trim();
+  const desc = document.getElementById('m-desc').value.trim();
+  if (!tag || !desc) { toast('Tag และ Description จำเป็น', 'error'); return; }
+  const entry = { tag, description: desc, type: document.getElementById('m-type').value.trim(), location: document.getElementById('m-loc').value.trim() };
+  const idx = document.getElementById('edit-machine-idx').value;
+  if (idx !== '') {
+    state.machines[parseInt(idx)] = entry;
+    toast('แก้ไขเครื่องจักรแล้ว ✅', 'success');
+  } else {
+    if (state.machines.find(m => m.tag === tag)) { toast('Tag ซ้ำ', 'error'); return; }
+    state.machines.push(entry);
+    toast('เพิ่มเครื่องจักรแล้ว ✅', 'success');
+  }
+  saveLocal(); populateFilterDropdowns(); updateBadges();
+  renderAdminMachines(); renderMachines();
+  pushMasterData();
+  closeModal('modal-add-machine');
+}
+
+function deleteMachine(i) {
+  if (!confirm(`ลบ "${state.machines[i].tag}"?`)) return;
+  state.machines.splice(i, 1);
+  saveLocal(); updateBadges(); renderAdminMachines(); renderMachines(); populateFilterDropdowns();
+  pushMasterData();
+  toast('ลบเครื่องจักรแล้ว', 'warn');
+}
+
+// ── ADMIN PERSONS TABLE ──
+function renderAdminPersons() {
+  const el = document.getElementById('admin-persons-table');
+  if (state.persons.length === 0) {
+    el.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:12px">ยังไม่มีบุคลากร</div>';
+    return;
+  }
+  el.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>ID</th><th>Name</th><th>Shift</th><th>Level</th><th></th></tr></thead>
+    <tbody>${state.persons.map((p,i) => `<tr>
+      <td style="font-family:var(--mono);font-size:12px">${escHtml(p.id)}</td>
+      <td>${escHtml(p.name)}</td>
+      <td style="color:var(--text2)">${escHtml(p.shift)}</td>
+      <td style="color:var(--text2)">${escHtml(p.level)}</td>
+      <td style="display:flex;gap:4px">
+        <button class="btn btn-sm" onclick="editPerson(${i})" style="font-size:11px">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="deletePerson(${i})" style="font-size:11px">🗑️</button>
+      </td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function openAddPersonModal(idx) {
+  document.getElementById('edit-person-idx').value = idx !== undefined ? idx : '';
+  document.getElementById('add-person-title').textContent = idx !== undefined ? 'แก้ไขบุคลากร' : 'เพิ่มบุคลากร';
+  const p = idx !== undefined ? state.persons[idx] : {};
+  document.getElementById('p-id').value = p.id || '';
+  document.getElementById('p-name').value = p.name || '';
+  document.getElementById('p-shift').value = p.shift || '';
+  document.getElementById('p-level').value = p.level || '';
+  openModal('modal-add-person');
+}
+
+function editPerson(i) { openAddPersonModal(i); }
+
+function savePersonEntry() {
+  const name = document.getElementById('p-name').value.trim();
+  if (!name) { toast('กรุณาใส่ชื่อ', 'error'); return; }
+  const entry = { id: document.getElementById('p-id').value.trim(), name, shift: document.getElementById('p-shift').value, level: document.getElementById('p-level').value };
+  const idx = document.getElementById('edit-person-idx').value;
+  if (idx !== '') {
+    state.persons[parseInt(idx)] = entry;
+    toast('แก้ไขบุคลากรแล้ว ✅', 'success');
+  } else {
+    state.persons.push(entry);
+    toast('เพิ่มบุคลากรแล้ว ✅', 'success');
+  }
+  saveLocal(); populatePersonSelect();
+  renderAdminPersons(); renderPersonPreview();
+  pushMasterData();
+  closeModal('modal-add-person');
+}
+
+function deletePerson(i) {
+  if (!confirm(`ลบ "${state.persons[i].name}"?`)) return;
+  state.persons.splice(i, 1);
+  saveLocal(); populatePersonSelect(); renderAdminPersons(); renderPersonPreview();
+  pushMasterData();
+  toast('ลบบุคลากรแล้ว', 'warn');
+}
+
+// ── CONFIG ──
+function saveAdminGistConfig() {
+  state.gistToken = document.getElementById('admin-gist-token').value.trim();
+  state.gistId = document.getElementById('admin-gist-id').value.trim();
+  saveLocal();
+  pushMasterData();
+  toast('บันทึก Gist Config แล้ว ✅', 'success');
+}
+
+function saveAdminEmails() {
+  const raw = document.getElementById('admin-emails-list').value;
+  const emails = raw.split('\n').map(e => e.trim()).filter(Boolean);
+  localStorage.setItem(DEFAULT_ADMIN_EMAILS_KEY, JSON.stringify(emails));
+  toast(`บันทึก Admin Emails ${emails.length} รายการ ✅`, 'success');
+  addActivityLog(currentUser?.email, 'update_admin_emails', `${emails.length} emails`);
+}
+
+// ── ACTIVITY LOG ──
+function loadActivityLog() {
+  const el = document.getElementById('admin-activity-log');
+  const logs = JSON.parse(localStorage.getItem('pm_activity_log') || '[]');
+  if (logs.length === 0) { el.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:12px">ไม่มี Log</div>'; return; }
+  el.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>เวลา</th><th>User</th><th>Action</th><th>รายละเอียด</th></tr></thead>
+    <tbody>${logs.slice(0,200).map(l => {
+      const t = new Date(l.timestamp).toLocaleString('th-TH',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+      return `<tr><td style="font-family:var(--mono);font-size:11px;white-space:nowrap">${t}</td><td style="font-size:12px">${escHtml(l.email||'—')}</td><td><span style="font-family:var(--mono);font-size:11px;background:var(--bg4);padding:2px 6px;border-radius:4px">${escHtml(l.action)}</span></td><td style="font-size:12px;color:var(--text2)">${escHtml(l.detail||'')}</td></tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+function exportActivityLog() {
+  const logs = JSON.parse(localStorage.getItem('pm_activity_log') || '[]');
+  const rows = [['Timestamp','Email','Action','Detail'], ...logs.map(l => [l.timestamp, l.email||'', l.action, l.detail||''])];
+  const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `PM_ActivityLog_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+}
+
+// ═══════════════════════════════════════
+// OVERRIDE savePmRecord to push to Firestore
+// ═══════════════════════════════════════
+const _origSavePm = savePmRecord;
+// (patched inline below in init override)
+
+// ═══════════════════════════════════════
+// BOOT (FIREBASE INIT)
 // ═══════════════════════════════════════
 init();
 </script>
