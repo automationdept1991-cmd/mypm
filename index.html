@@ -18,7 +18,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
+  /* ── DARK / LIGHT THEME ── */
+  :root, [data-theme="light"] {
     --bg: #F4F6FB;
     --bg2: #FFFFFF;
     --bg3: #EEF1F8;
@@ -28,29 +29,55 @@
     --text: #1A1D2E;
     --text2: #5A6179;
     --text3: #9198B0;
-    --good: #FFFFFF;
-    --good-bg: #12B76A;
-    --good-border: #12B76A;
-    --warn: #FFFFFF;
-    --warn-bg: #F79009;
-    --warn-border: #F79009;
-    --stop: #FFFFFF;
-    --stop-bg: #F04438;
-    --stop-border: #F04438;
-    --accent: #6C63FF;
-    --accent2: #8B85FF;
     --accent-light: #EEEDFF;
-    --card-purple: #7C3AED;
-    --card-orange: #EA580C;
-    --card-blue: #2563EB;
-    --card-pink: #DB2777;
-    --font: 'IBM Plex Sans Thai', sans-serif;
-    --mono: 'IBM Plex Mono', monospace;
-    --radius: 16px;
-    --radius-sm: 10px;
     --shadow: 0 2px 12px rgba(108,99,255,0.10);
     --shadow-card: 0 4px 24px rgba(30,30,60,0.10);
+    --login-blob1: #EEEDFF;
+    --login-blob2: #FFE4F6;
   }
+  [data-theme="dark"] {
+    --bg: #0D0F1A;
+    --bg2: #151828;
+    --bg3: #1C2035;
+    --bg4: #232742;
+    --border: #2A2F4A;
+    --border2: #363D60;
+    --text: #E8EAFF;
+    --text2: #8B93CC;
+    --text3: #555E99;
+    --accent-light: #1E1B4B;
+    --shadow: 0 2px 16px rgba(0,0,0,0.4);
+    --shadow-card: 0 4px 28px rgba(0,0,0,0.5);
+    --login-blob1: #1E1B4B;
+    --login-blob2: #2D0B3E;
+  }
+
+  /* ── FULLSCREEN OVERLAY (login / config) ── */
+  .fullscreen-overlay {
+    position: fixed; inset: 0;
+    background: var(--bg);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 24px;
+  }
+
+  /* ── THEME TOGGLE BTN ── */
+  .theme-toggle {
+    width: 38px; height: 38px;
+    background: var(--bg3);
+    border: 1.5px solid var(--border);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 16px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .theme-toggle:hover { background: var(--bg4); border-color: var(--accent); }
+
+}
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -566,7 +593,7 @@
 <body>
 
 <!-- ═══════════ FIREBASE CONFIG NOTICE ═══════════ -->
-<div id="firebase-config-notice" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:9999;align-items:center;justify-content:center;padding:20px">
+<div id="firebase-config-notice" class="fullscreen-overlay" style="display:none;z-index:9999">
   <div style="background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:28px;max-width:480px;width:100%;box-shadow:var(--shadow-card)">
     <div style="font-size:36px;text-align:center;margin-bottom:12px">🔥</div>
     <div style="font-size:18px;font-weight:700;margin-bottom:6px;color:var(--text);text-align:center">ตั้งค่า Firebase</div>
@@ -587,11 +614,11 @@
 </div>
 
 <!-- ═══════════ LOGIN SCREEN ═══════════ -->
-<div id="login-screen" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:1000;align-items:center;justify-content:center;padding:24px;flex-direction:column">
+<div id="login-screen" class="fullscreen-overlay" style="display:none">
 
   <!-- Decorative blobs -->
-  <div style="position:absolute;top:-60px;right:-60px;width:220px;height:220px;background:var(--accent-light);border-radius:50%;opacity:0.6;pointer-events:none"></div>
-  <div style="position:absolute;bottom:-40px;left:-40px;width:160px;height:160px;background:#FFF0FB;border-radius:50%;opacity:0.5;pointer-events:none"></div>
+  <div style="position:absolute;top:-60px;right:-60px;width:220px;height:220px;background:var(--login-blob1);border-radius:50%;opacity:0.7;pointer-events:none"></div>
+  <div style="position:absolute;bottom:-40px;left:-40px;width:160px;height:160px;background:var(--login-blob2);border-radius:50%;opacity:0.6;pointer-events:none"></div>
 
   <div style="width:100%;max-width:360px;position:relative;z-index:1">
     <!-- Logo -->
@@ -610,10 +637,10 @@
 
       <button onclick="signInWithGoogle()" id="btn-google-login"
         style="width:100%;display:flex;align-items:center;justify-content:center;gap:12px;
-               background:#fff;color:#3c4043;border:1.5px solid #dadce0;border-radius:12px;
+               background:var(--bg2);color:var(--text);border:1.5px solid var(--border2);border-radius:12px;
                padding:14px 16px;font-size:14px;font-weight:600;cursor:pointer;
                font-family:'IBM Plex Sans Thai',sans-serif;transition:all 0.15s;
-               box-shadow:0 1px 4px rgba(0,0,0,0.08)">
+               box-shadow:var(--shadow)">
         <svg width="20" height="20" viewBox="0 0 18 18"><path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/><path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/><path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/><path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/></svg>
         Sign in with Google
       </button>
@@ -796,6 +823,8 @@
       <span id="topbar-person-icon">👤</span>
       <span class="topbar-label-desktop">เลือกผู้ตรวจ</span>
     </button>
+    <!-- Theme toggle -->
+    <button class="theme-toggle" onclick="toggleTheme()" id="btn-theme" title="เปลี่ยน Theme">🌙</button>
     <!-- Admin button -->
     <div id="topbar-admin-btn" style="display:none;position:relative">
       <button class="btn btn-sm" style="border-color:#d29922;color:#d29922;padding:4px 10px" onclick="openAdminPanel()" title="Admin Panel">
@@ -1200,6 +1229,7 @@ let state = {
 // INIT
 // ═══════════════════════════════════════
 function init() {
+  initTheme();
   loadLocal();
   updateTopbarDate();
   renderAll();
@@ -2802,6 +2832,26 @@ function exportActivityLog() {
 // ═══════════════════════════════════════
 const _origSavePm = savePmRecord;
 // (patched inline below in init override)
+
+// ═══════════════════════════════════════
+// THEME TOGGLE
+// ═══════════════════════════════════════
+function initTheme() {
+  const saved = localStorage.getItem('pm_theme') || 'dark';
+  applyTheme(saved);
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('pm_theme', theme);
+  const btn = document.getElementById('btn-theme');
+  if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+}
 
 // ═══════════════════════════════════════
 // BOOT — wait for DOM + all scripts ready
