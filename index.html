@@ -273,10 +273,10 @@ tr:hover td{background:var(--bg3)}
           autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()">
       </div>
       <div class="form-group">
-        <label class="form-label">Department</label>
+        <label class="form-label">Shift</label>
         <select class="form-select" id="reg-shift">
-          <option value="A">Automation</option><option value="B">Mechanical</option>
-          <option value="C">Electrical</option><option value="-">ไม่ระบุ</option>
+          <option value="A">Shift A</option><option value="B">Shift B</option>
+          <option value="C">Shift C</option><option value="-">ไม่ระบุ</option>
         </select>
       </div>
       <button class="btn btn-primary btn-full" id="btn-register" onclick="doRegister()">สมัครใช้งาน</button>
@@ -339,8 +339,13 @@ tr:hover td{background:var(--bg3)}
 <!-- MACHINES -->
 <div class="page" id="page-machines">
   <div class="section-header">
-    <div><div class="section-title">รายการเครื่องจักร</div><div class="section-sub" id="machine-count-sub">—</div></div>
+    <div>
+      <div class="section-title">รายการเครื่องจักร</div>
+      <div class="section-sub" id="machine-count-sub">—</div>
+      <div id="machine-sync-status" style="font-size:11px;color:var(--text3);margin-top:2px"></div>
+    </div>
     <div class="section-header-actions">
+      <button class="btn btn-sm" id="btn-machine-sync" onclick="syncMachinesManual()">🔄 ซิงค์</button>
       <button class="btn btn-sm" onclick="document.getElementById('import-machine-excel').click()">📥 Excel</button>
       <input type="file" id="import-machine-excel" accept=".xlsx,.xls" style="display:none" onchange="importMachineExcel(this)">
       <button class="btn btn-primary btn-sm" onclick="openPmModal(null)">+ PM</button>
@@ -909,14 +914,76 @@ function showPage(name) {
   document.getElementById('page-'+name).classList.add('active');
   document.querySelector('[data-page="'+name+'"]')?.classList.add('active');
   document.querySelector('[data-bnav="'+name+'"]')?.classList.add('active');
-  if (name==='dashboard') renderDashboard();
-  if (name==='machines') renderMachines();
+  if (name==='dashboard') { renderDashboard(); autoSyncGist('dashboard'); }
+  if (name==='machines') { renderMachines(); autoSyncGist('machines'); }
   if (name==='log') renderLog();
   if (name==='summary') renderSummary();
   if (name==='settings') {
     document.getElementById('gist-token').value=state.gistToken;
     document.getElementById('gist-id').value=state.gistId;
     renderUserManagement();
+  }
+}
+
+// ── AUTO SYNC เมื่อเข้า page (silent — ไม่แสดง toast) ──
+let _lastAutoSync = 0;
+async function autoSyncGist(page) {
+  if (!state.gistToken || !state.gistId) return;
+  // throttle: sync ได้ทุก 30 วินาทีเท่านั้น ไม่งั้น กดไปมาระหว่าง page จะ spam API
+  const now = Date.now();
+  if (now - _lastAutoSync < 30000) return;
+  _lastAutoSync = now;
+  // แสดง indicator เล็กๆ บน machines page ถ้าอยู่ที่นั้น
+  const statusEl = document.getElementById('machine-sync-status');
+  if (statusEl) statusEl.textContent = '⏳ กำลังซิงค์...';
+  try {
+    const r = await fetch('https://api.github.com/gists/'+state.gistId,
+      {headers:{Authorization:'token '+state.gistToken}});
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    const g = await r.json();
+    const raw = g.files['pm-data.json']?.content;
+    if (raw) {
+      const d = JSON.parse(raw);
+      if (d.machines) state.machines = d.machines;
+      if (d.pmLogs) state.pmLogs = d.pmLogs;
+      saveLocal(); populateFilterDropdowns();
+      renderDashboard(); renderMachines(); updateBadges();
+    }
+    if (statusEl) statusEl.textContent = '✅ ซิงค์แล้ว '+new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})+' น.';
+  } catch(e) {
+    if (statusEl) statusEl.textContent = '❌ ซิงค์ไม่ได้: '+e.message;
+  }
+}
+
+// ── MANUAL SYNC ปุ่มบน machines page ──
+async function syncMachinesManual() {
+  if (!state.gistToken || !state.gistId) { toast('ยังไม่ได้ตั้งค่า PM Gist','error'); return; }
+  const btn = document.getElementById('btn-machine-sync');
+  const statusEl = document.getElementById('machine-sync-status');
+  if (btn) { btn.disabled=true; btn.textContent='⏳ กำลังซิงค์...'; }
+  if (statusEl) statusEl.textContent = '';
+  _lastAutoSync = 0; // reset throttle เพื่อให้ auto sync รอบถัดไปทำงานได้
+  try {
+    const r = await fetch('https://api.github.com/gists/'+state.gistId,
+      {headers:{Authorization:'token '+state.gistToken}});
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    const g = await r.json();
+    const raw = g.files['pm-data.json']?.content;
+    if (raw) {
+      const d = JSON.parse(raw);
+      if (d.machines) state.machines = d.machines;
+      if (d.pmLogs) state.pmLogs = d.pmLogs;
+      saveLocal(); populateFilterDropdowns();
+      renderDashboard(); renderMachines(); updateBadges();
+    }
+    _lastAutoSync = Date.now();
+    if (statusEl) statusEl.textContent = '✅ ซิงค์แล้ว '+new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})+' น.';
+    toast('ซิงค์สำเร็จ ✅','success');
+  } catch(e) {
+    if (statusEl) statusEl.textContent = '❌ '+e.message;
+    toast('ซิงค์ไม่ได้: '+e.message,'error');
+  } finally {
+    if (btn) { btn.disabled=false; btn.textContent='🔄 ซิงค์'; }
   }
 }
 function renderAll() { updateBadges(); renderDashboard(); populateFilterDropdowns(); }
