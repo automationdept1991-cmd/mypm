@@ -602,7 +602,7 @@ function saveLocal() {
   localStorage.setItem('pmsys_v3', JSON.stringify({
     machines:state.machines, pmLogs:state.pmLogs,
     gistToken:state.gistToken, gistId:state.gistId,
-    userGistToken:state.userGistToken, userGistId:state.userGistId,
+    users:state.users,
   }));
 }
 function loadLocal() {
@@ -614,8 +614,7 @@ function loadLocal() {
     state.pmLogs = d.pmLogs||[];
     state.gistToken = d.gistToken||'';
     state.gistId = d.gistId||'';
-    state.userGistToken = d.userGistToken||'';
-    state.userGistId = d.userGistId||'';
+    state.users = d.users||[];
   } catch(e) { console.warn(e); }
 }
 
@@ -686,25 +685,13 @@ async function doLogin() {
     hideAuthScreen(); renderAll(); showPage('settings');
     toast('เข้าสู่ระบบ Super Admin 🔑','success'); return;
   }
-  if (!state.userGistToken||!state.userGistId) {
-    errEl.textContent='ยังไม่ได้ตั้งค่า User Gist — ใช้ superadmin / PMSYS2025! เพื่อตั้งค่าก่อน';
-    errEl.classList.add('show'); return;
-  }
-  const btn = document.getElementById('btn-login');
-  btn.disabled=true; btn.textContent='⏳ กำลังตรวจสอบ...';
-  try {
-    await loadUsersFromGist();
-    const user = state.users.find(u=>u.username.toLowerCase()===username);
-    if (!user) { errEl.textContent='❌ ไม่พบ username นี้'; errEl.classList.add('show'); }
-    else if (!user.approved) { errEl.textContent='⏳ รออนุมัติจาก Admin'; errEl.classList.add('show'); }
-    else if (user.passwordHash!==hashPassword(password)) { errEl.textContent='❌ Password ไม่ถูกต้อง'; errEl.classList.add('show'); }
-    else {
-      state.currentUser = {username:user.username,name:user.name,role:user.role,shift:user.shift};
-      hideAuthScreen(); renderAll(); showPage('dashboard');
-      toast('ยินดีต้อนรับ '+user.name+' 👋','success');
-    }
-  } catch(e) { errEl.textContent='❌ เชื่อมต่อ Gist ไม่ได้: '+e.message; errEl.classList.add('show'); }
-  finally { btn.disabled=false; btn.textContent='เข้าสู่ระบบ'; }
+  const user = state.users.find(u=>u.username.toLowerCase()===username);
+  if (!user) { errEl.textContent='❌ ไม่พบ username นี้'; errEl.classList.add('show'); return; }
+  if (!user.approved) { errEl.textContent='⏳ รออนุมัติจาก Admin'; errEl.classList.add('show'); return; }
+  if (user.passwordHash!==hashPassword(password)) { errEl.textContent='❌ Password ไม่ถูกต้อง'; errEl.classList.add('show'); return; }
+  state.currentUser = {username:user.username,name:user.name,role:user.role,shift:user.shift};
+  hideAuthScreen(); renderAll(); showPage('dashboard');
+  toast('ยินดีต้อนรับ '+user.name+' 👋','success');
 }
 async function doRegister() {
   const name=document.getElementById('reg-name').value.trim();
@@ -717,25 +704,16 @@ async function doRegister() {
   if (!name||!username||!password) { errEl.textContent='กรุณากรอกข้อมูลให้ครบ'; errEl.classList.add('show'); return; }
   if (password.length<4) { errEl.textContent='Password ต้องมีอย่างน้อย 4 ตัว'; errEl.classList.add('show'); return; }
   if (!/^[a-z0-9_]+$/.test(username)) { errEl.textContent='Username ใช้ได้เฉพาะ a-z, 0-9, _'; errEl.classList.add('show'); return; }
-  if (!state.userGistToken||!state.userGistId) { errEl.textContent='ระบบยังไม่พร้อม — Admin ต้องตั้งค่า User Gist ก่อน'; errEl.classList.add('show'); return; }
-  const btn=document.getElementById('btn-register');
-  btn.disabled=true; btn.textContent='⏳ กำลังสมัคร...';
-  try {
-    await loadUsersFromGist();
-    if (state.users.find(u=>u.username===username)) { errEl.textContent='❌ Username นี้ถูกใช้แล้ว'; errEl.classList.add('show'); }
-    else {
-      const isFirst = state.users.length===0;
-      state.users.push({username,name,passwordHash:hashPassword(password),
-        role:isFirst?'admin':'user',shift,approved:isFirst,createdAt:new Date().toISOString()});
-      await saveUsersToGist();
-      okEl.textContent = isFirst
-        ? '✅ สมัครสำเร็จ! คุณเป็น Admin คนแรก — เข้าสู่ระบบได้เลย'
-        : '✅ สมัครสำเร็จ! รออนุมัติจาก Admin ก่อนเข้าใช้งาน';
-      okEl.classList.add('show');
-      if (isFirst) setTimeout(()=>switchAuthTab('login'),2000);
-    }
-  } catch(e) { errEl.textContent='❌ '+e.message; errEl.classList.add('show'); }
-  finally { btn.disabled=false; btn.textContent='สมัครใช้งาน'; }
+  if (state.users.find(u=>u.username===username)) { errEl.textContent='❌ Username นี้ถูกใช้แล้ว'; errEl.classList.add('show'); return; }
+  const isFirst = state.users.length===0;
+  state.users.push({username,name,passwordHash:hashPassword(password),
+    role:isFirst?'admin':'user',shift,approved:isFirst,createdAt:new Date().toISOString()});
+  saveLocal();
+  okEl.textContent = isFirst
+    ? '✅ สมัครสำเร็จ! คุณเป็น Admin คนแรก — เข้าสู่ระบบได้เลย'
+    : '✅ สมัครสำเร็จ! รออนุมัติจาก Admin ก่อนเข้าใช้งาน';
+  okEl.classList.add('show');
+  if (isFirst) setTimeout(()=>switchAuthTab('login'),2000);
 }
 function confirmLogout() {
   if (!confirm('ออกจากระบบ?')) return;
