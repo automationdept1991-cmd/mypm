@@ -1,810 +1,332 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta name="theme-color" content="#0d1117">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="PM System">
-  <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="icon-192.png">
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0d1117">
 <title>Machine PM System</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<!-- Firebase (no defer — must load synchronously before inline script) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-  /* ── DARK / LIGHT THEME ── */
-  :root, [data-theme="light"] {
-    --bg: #F4F6FB;
-    --bg2: #FFFFFF;
-    --bg3: #EEF1F8;
-    --bg4: #E4E8F3;
-    --border: #DDE2F0;
-    --border2: #C8CFDF;
-    --text: #1A1D2E;
-    --text2: #5A6179;
-    --text3: #9198B0;
-    --accent-light: #EEEDFF;
-    --shadow: 0 2px 12px rgba(108,99,255,0.10);
-    --shadow-card: 0 4px 24px rgba(30,30,60,0.10);
-    --login-blob1: #EEEDFF;
-    --login-blob2: #FFE4F6;
-  }
-  [data-theme="dark"] {
-    --bg: #0D0F1A;
-    --bg2: #151828;
-    --bg3: #1C2035;
-    --bg4: #232742;
-    --border: #2A2F4A;
-    --border2: #363D60;
-    --text: #E8EAFF;
-    --text2: #8B93CC;
-    --text3: #555E99;
-    --accent-light: #1E1B4B;
-    --shadow: 0 2px 16px rgba(0,0,0,0.4);
-    --shadow-card: 0 4px 28px rgba(0,0,0,0.5);
-    --login-blob1: #1E1B4B;
-    --login-blob2: #2D0B3E;
-  }
-
-  /* ── FULLSCREEN OVERLAY (login / config) ── */
-  .fullscreen-overlay {
-    position: fixed; inset: 0;
-    background: var(--bg);
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    padding: 24px;
-  }
-
-  /* ── THEME TOGGLE BTN ── */
-  .theme-toggle {
-    width: 38px; height: 38px;
-    background: var(--bg3);
-    border: 1.5px solid var(--border);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; font-size: 16px;
-    transition: all 0.2s;
-    flex-shrink: 0;
-  }
-  .theme-toggle:hover { background: var(--bg4); border-color: var(--accent); }
-
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--bg4:#21262d;
+  --border:#30363d;--border2:#3d444d;
+  --text:#e6edf3;--text2:#9198a1;--text3:#656d76;
+  --good:#2ea043;--good-bg:#0f2d17;--good-b:#2ea043;
+  --warn:#d29922;--warn-bg:#2d1b00;--warn-b:#d29922;
+  --stop:#da3633;--stop-bg:#2d0f0e;--stop-b:#da3633;
+  --accent:#1f6feb;--accent2:#388bfd;
+  --font:'IBM Plex Sans Thai',sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+  --nav-h:60px;--top-h:52px;
 }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;
+  min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── TOPBAR ── */
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);
+  padding:0 12px;display:flex;align-items:center;justify-content:space-between;
+  height:var(--top-h);position:sticky;top:0;z-index:100;gap:8px}
+.topbar-left{display:flex;align-items:center;gap:10px;min-width:0}
+.topbar-logo{font-family:var(--mono);font-size:16px;font-weight:700;
+  color:var(--accent2);letter-spacing:1px;white-space:nowrap}
+.topbar-logo span{color:var(--text3)}
+.topbar-date{font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.topbar-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.topbar-user{display:flex;align-items:center;gap:6px;cursor:pointer;
+  padding:5px 10px;border-radius:20px;background:var(--bg4);border:1px solid var(--border)}
+.topbar-user-name{font-size:12px;font-weight:600;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topbar-role-badge{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700}
+.topbar-role-badge.admin{background:rgba(31,111,235,.2);color:var(--accent2)}
+.topbar-role-badge.user{background:var(--bg3);color:var(--text2)}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--font);
-    font-size: 14px;
-    min-height: 100vh;
-    padding-bottom: 72px;
-  }
+/* ── NAV ── */
+.nav-tabs{display:none;gap:2px;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 16px;overflow-x:auto}
+.nav-tab{padding:11px 16px;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;
+  font-size:13px;font-weight:500;white-space:nowrap;transition:all .15s;display:flex;align-items:center;gap:6px}
+.nav-tab:hover{color:var(--text)}
+.nav-tab.active{color:var(--accent2);border-bottom-color:var(--accent2)}
+.nav-tab .badge{background:var(--bg4);color:var(--text2);font-size:10px;padding:1px 6px;border-radius:10px;font-family:var(--mono)}
 
-  /* ── TOP BAR ── */
-  .topbar {
-    background: var(--bg2);
-    border-bottom: 1px solid var(--border);
-    padding: 0 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 56px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    gap: 8px;
-    box-shadow: 0 1px 0 var(--border);
-  }
-  .topbar-left { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-  .topbar-logo {
-    font-family: var(--mono);
-    font-size: 16px;
-    font-weight: 700;
-    background: linear-gradient(135deg, var(--card-purple), var(--accent));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    letter-spacing: 1px;
-  }
-  .topbar-logo span { opacity: 0.5; }
-  #topbar-date { display: none; }
-  .topbar-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-  @media (min-width: 640px) {
-    #topbar-date { display: block; font-size: 11px; color: var(--text3); }
-    .topbar { padding: 0 20px; }
-  }
-  .topbar-label-desktop { display: none; }
-  .topbar-name { display: none; }
-  @media (min-width: 520px) {
-    .topbar-label-desktop { display: inline; }
-    .topbar-name { display: block; }
-  }
+/* ── BOTTOM NAV ── */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);
+  border-top:1px solid var(--border);z-index:100;padding-bottom:env(safe-area-inset-bottom,0px)}
+.bottom-nav-inner{display:flex;height:var(--nav-h)}
+.bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;cursor:pointer;color:var(--text3);font-size:10px;font-weight:500;border:none;
+  background:none;font-family:var(--font);transition:color .15s;
+  -webkit-tap-highlight-color:transparent;padding:6px 2px 4px;position:relative}
+.bottom-nav-item .nav-icon{font-size:22px;line-height:1}
+.bottom-nav-item.active{color:var(--accent2)}
+.bottom-nav-item.active::after{content:'';position:absolute;top:0;left:20%;right:20%;
+  height:2px;background:var(--accent2);border-radius:0 0 3px 3px}
+.bottom-nav-item:active{background:rgba(255,255,255,.04)}
 
-  /* ── BOTTOM NAV (replaces top nav on mobile) ── */
-  .nav-tabs {
-    display: none;
-  }
-  .bottom-nav {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
-    background: var(--bg2);
-    border-top: 1px solid var(--border);
-    display: flex;
-    z-index: 100;
-    box-shadow: 0 -4px 20px rgba(108,99,255,0.08);
-    height: 64px;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-  .bottom-nav-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    cursor: pointer;
-    color: var(--text3);
-    font-size: 10px;
-    font-weight: 500;
-    transition: all 0.15s;
-    padding: 8px 4px;
-    border: none;
-    background: none;
-    font-family: var(--font);
-  }
-  .bottom-nav-item svg { width: 22px; height: 22px; stroke-width: 1.8; transition: all 0.15s; }
-  .bottom-nav-item.active { color: var(--accent); }
-  .bottom-nav-item.active svg { stroke: var(--accent); }
-  .bottom-nav-item .nav-dot {
-    width: 5px; height: 5px;
-    background: var(--accent);
-    border-radius: 50%;
-    margin-top: 1px;
-    opacity: 0;
-    transition: opacity 0.15s;
-  }
-  .bottom-nav-item.active .nav-dot { opacity: 1; }
-  .bottom-nav-fab {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .bottom-nav-fab-btn {
-    width: 48px; height: 48px;
-    background: var(--accent);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    border: none;
-    box-shadow: 0 4px 16px rgba(108,99,255,0.4);
-    transition: all 0.15s;
-    margin-top: -20px;
-  }
-  .bottom-nav-fab-btn:active { transform: scale(0.93); }
-  .bottom-nav-fab-btn svg { width: 22px; height: 22px; stroke: white; stroke-width: 2.2; }
-  .badge-dot {
-    position: absolute;
-    top: 4px; right: 12px;
-    width: 8px; height: 8px;
-    background: var(--stop-bg);
-    border-radius: 50%;
-    border: 2px solid var(--bg2);
-  }
+/* ── FAB ── */
+.fab{position:fixed;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 14px);
+  right:16px;width:52px;height:52px;border-radius:50%;background:var(--accent);
+  color:#fff;border:none;font-size:28px;cursor:pointer;
+  box-shadow:0 4px 16px rgba(31,111,235,.45);z-index:99;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .15s;-webkit-tap-highlight-color:transparent}
+.fab:active{transform:scale(.92)}
 
-  /* ── MAIN CONTENT ── */
-  .main { padding: 16px; max-width: 1400px; margin: 0 auto; }
-  @media (min-width: 640px) { .main { padding: 20px; } }
-  .page { display: none; }
-  .page.active { display: block; }
+/* ── MAIN ── */
+.main{padding:14px 12px calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 70px)}
+.page{display:none}.page.active{display:block}
 
-  /* ── GREETING HEADER ── */
-  .page-greeting {
-    margin-bottom: 20px;
-  }
-  .page-greeting .greeting-sub { font-size: 12px; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
-  .page-greeting .greeting-title { font-size: 22px; font-weight: 700; color: var(--text); }
-  .page-greeting .greeting-desc { font-size: 13px; color: var(--text2); margin-top: 2px; }
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;
+  border-radius:8px;border:1px solid var(--border2);cursor:pointer;font-size:13px;
+  font-family:var(--font);font-weight:500;transition:all .15s;background:var(--bg4);
+  color:var(--text);-webkit-tap-highlight-color:transparent;white-space:nowrap;min-height:40px}
+.btn:active{opacity:.8;transform:scale(.98)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-sm{padding:6px 12px;font-size:12px;min-height:34px}
+.btn-danger{border-color:var(--stop);color:var(--stop)}
+.btn-success{border-color:var(--good);color:var(--good)}
+.btn-full{width:100%}
+.btn-icon{width:38px;height:38px;padding:0;border-radius:10px;font-size:18px;min-height:unset}
 
-  /* ── BUTTONS ── */
-  .btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 8px 16px;
-    border-radius: var(--radius-sm);
-    border: 1.5px solid var(--border2);
-    cursor: pointer;
-    font-size: 13px;
-    font-family: var(--font);
-    font-weight: 600;
-    transition: all 0.15s;
-    background: var(--bg2);
-    color: var(--text);
-  }
-  .btn:hover { background: var(--bg3); border-color: var(--accent); }
-  .btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .btn-primary:hover { background: var(--accent2); border-color: var(--accent2); }
-  .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; }
-  .btn-danger { border-color: #FDA29B; color: #B42318; background: #FFF4F3; }
-  .btn-danger:hover { background: #FEE4E2; }
-  .btn-success { border-color: #6CE9A6; color: #027A48; background: #F0FDF4; }
-  .btn-success:hover { background: #DCFCE7; }
+/* ── CARD ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px}
+.card-title{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
 
-  /* ── CARDS ── */
-  .card {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 16px;
-    box-shadow: var(--shadow);
-  }
-  .card-title {
-    font-size: 12px; font-weight: 700; color: var(--text3);
-    text-transform: uppercase; letter-spacing: 0.6px;
-    margin-bottom: 14px; display: flex; align-items: center; gap: 6px;
-  }
+/* ── STATS ── */
+.stats-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+.stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 12px;text-align:center}
+.stat-card.good{border-color:var(--good-b);background:var(--good-bg)}
+.stat-card.warn{border-color:var(--warn-b);background:var(--warn-bg)}
+.stat-card.stop{border-color:var(--stop-b);background:var(--stop-bg)}
+.stat-num{font-family:var(--mono);font-size:30px;font-weight:600;line-height:1;margin-bottom:4px}
+.stat-card.good .stat-num{color:var(--good)}.stat-card.warn .stat-num{color:var(--warn)}.stat-card.stop .stat-num{color:var(--stop)}
+.stat-label{font-size:11px;color:var(--text2)}
 
-  /* ── COLOR STAT CARDS ── */
-  .stats-row {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-  .stat-card {
-    border-radius: var(--radius);
-    padding: 16px;
-    position: relative;
-    overflow: hidden;
-    min-height: 90px;
-  }
-  .stat-card.total { background: var(--accent); }
-  .stat-card.good { background: var(--good-bg); }
-  .stat-card.warn { background: var(--warn-bg); }
-  .stat-card.stop { background: var(--stop-bg); }
-  .stat-card.logs { background: linear-gradient(135deg, #0EA5E9, #6366F1); }
-  .stat-num {
-    font-family: var(--mono); font-size: 34px; font-weight: 700;
-    color: #fff; line-height: 1; margin-bottom: 4px;
-  }
-  .stat-label { font-size: 12px; color: rgba(255,255,255,0.8); font-weight: 500; }
-  .stat-card .stat-icon {
-    position: absolute; right: 12px; top: 12px;
-    width: 36px; height: 36px;
-    background: rgba(255,255,255,0.2);
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
-  }
+/* ── STATUS BADGE ── */
+.status-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;
+  border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.status-badge::before{content:'●';font-size:7px}
+.status-badge.good{background:var(--good-bg);color:var(--good);border:1px solid var(--good-b)}
+.status-badge.warning{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-b)}
+.status-badge.stopped{background:var(--stop-bg);color:var(--stop);border:1px solid var(--stop-b)}
 
-  /* ── STATUS BADGE ── */
-  .status-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 4px 10px; border-radius: 20px;
-    font-size: 11px; font-weight: 700;
-  }
-  .status-badge::before { content: '●'; font-size: 7px; }
-  .status-badge.good { background: #ECFDF3; color: #027A48; }
-  .status-badge.warning { background: #FFFAEB; color: #B54708; }
-  .status-badge.stopped { background: #FFF4F3; color: #B42318; }
+/* ── MACHINE CARDS ── */
+.machine-grid{display:flex;flex-direction:column;gap:10px}
+.machine-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.machine-card:active{opacity:.85}
+.machine-card.good{border-left:4px solid var(--good)}.machine-card.warning{border-left:4px solid var(--warn)}.machine-card.stopped{border-left:4px solid var(--stop)}
+.machine-card-header{padding:12px 14px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.machine-tag{font-family:var(--mono);font-size:11px;color:var(--text3);background:var(--bg4);padding:2px 7px;border-radius:4px;display:inline-block}
+.machine-name{font-weight:600;font-size:15px;margin-bottom:4px;line-height:1.3}
+.machine-body{padding:0 14px 10px}
+.machine-meta{display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:10px}
+.machine-meta-row{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2)}
+.machine-footer{padding:10px 14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.15);gap:8px}
+.machine-footer-time{font-size:11px;color:var(--text3);font-family:var(--mono)}
 
-  /* ── MACHINE GRID & CARDS ── */
-  .machine-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 12px;
-  }
-  .machine-card {
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    transition: all 0.2s;
-    cursor: pointer;
-    box-shadow: var(--shadow);
-  }
-  .machine-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-card); }
-  .machine-card-color-strip {
-    height: 5px;
-    border-radius: var(--radius) var(--radius) 0 0;
-  }
-  .machine-card.good .machine-card-color-strip { background: var(--good-bg); }
-  .machine-card.warning .machine-card-color-strip { background: var(--warn-bg); }
-  .machine-card.stopped .machine-card-color-strip { background: var(--stop-bg); }
-  .machine-card-header {
-    padding: 12px 14px 8px;
-    display: flex; justify-content: space-between; align-items: flex-start;
-  }
-  .machine-tag {
-    font-family: var(--mono); font-size: 10px; font-weight: 700;
-    color: var(--accent); background: var(--accent-light);
-    padding: 3px 8px; border-radius: 6px;
-  }
-  .machine-name { font-weight: 700; font-size: 14px; color: var(--text); margin-bottom: 2px; }
-  .machine-body { padding: 0 14px 10px; }
-  .machine-meta { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
-  .machine-meta-row {
-    display: flex; align-items: center; gap: 6px;
-    font-size: 12px; color: var(--text2);
-  }
-  .machine-meta-row svg { flex-shrink: 0; color: var(--text3); }
-  .machine-footer {
-    padding: 10px 14px;
-    border-top: 1px solid var(--border);
-    display: flex; justify-content: space-between; align-items: center;
-    background: var(--bg3);
-  }
-  .machine-footer-time { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+/* ── FILTER ── */
+.filter-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.filter-row .filter-input{flex:1;min-width:0}
+.filter-bar{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center}
+.filter-bar::-webkit-scrollbar{display:none}
+.filter-input{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font);font-size:14px;width:100%}
+.filter-input:focus{outline:none;border-color:var(--accent)}
+.filter-select{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font);font-size:13px;cursor:pointer;min-height:40px}
+.filter-chip{padding:7px 14px;border-radius:20px;border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:500;color:var(--text2);background:var(--bg2);transition:all .15s;white-space:nowrap;flex-shrink:0;-webkit-tap-highlight-color:transparent;min-height:36px;display:flex;align-items:center}
+.filter-chip.active{color:var(--text);background:var(--bg4);border-color:var(--accent)}
+.filter-chip.good.active{border-color:var(--good);color:var(--good);background:var(--good-bg)}
+.filter-chip.warn.active{border-color:var(--warn);color:var(--warn);background:var(--warn-bg)}
+.filter-chip.stop.active{border-color:var(--stop);color:var(--stop);background:var(--stop-bg)}
 
-  /* ── FILTER BAR ── */
-  .filter-bar {
-    display: flex; gap: 8px; margin-bottom: 16px;
-    flex-wrap: wrap; align-items: center;
-  }
-  .filter-input {
-    background: var(--bg2); border: 1.5px solid var(--border);
-    border-radius: 10px; padding: 8px 12px;
-    color: var(--text); font-family: var(--font); font-size: 13px;
-    min-width: 200px;
-  }
-  .filter-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
-  .filter-select {
-    background: var(--bg2); border: 1.5px solid var(--border);
-    border-radius: 10px; padding: 8px 12px;
-    color: var(--text); font-family: var(--font); font-size: 13px; cursor: pointer;
-  }
-  .filter-select:focus { outline: none; }
-  .filter-chip {
-    padding: 6px 14px; border-radius: 20px;
-    border: 1.5px solid var(--border);
-    cursor: pointer; font-size: 12px; font-weight: 600;
-    color: var(--text2); background: var(--bg2); transition: all 0.15s;
-  }
-  .filter-chip.active { color: var(--accent); background: var(--accent-light); border-color: var(--accent); }
-  .filter-chip.good.active { border-color: #12B76A; color: #027A48; background: #ECFDF3; }
-  .filter-chip.warn.active { border-color: #F79009; color: #B54708; background: #FFFAEB; }
-  .filter-chip.stop.active { border-color: #F04438; color: #B42318; background: #FFF4F3; }
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:92dvh;overflow-y:auto;box-shadow:0 -8px 40px rgba(0,0,0,.5);-webkit-overflow-scrolling:touch}
+.modal-header{padding:16px 18px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--bg2);z-index:1}
+.modal-header::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:36px;height:4px;background:var(--border2);border-radius:2px}
+.modal-title{font-weight:600;font-size:15px;margin-top:6px}
+.modal-close{background:var(--bg4);border:none;color:var(--text2);cursor:pointer;font-size:16px;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-top:6px;-webkit-tap-highlight-color:transparent}
+.modal-body{padding:16px 18px}
+.modal-footer{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;position:sticky;bottom:0;background:var(--bg2)}
+.modal-footer .btn{flex:1}
 
-  /* ── MODAL ── */
-  .modal-overlay {
-    position: fixed; inset: 0;
-    background: rgba(15,10,40,0.55);
-    z-index: 200; display: none; align-items: flex-end;
-    justify-content: center; padding: 0;
-    backdrop-filter: blur(2px);
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: var(--bg2);
-    border-radius: 24px 24px 0 0;
-    width: 100%; max-width: 560px;
-    max-height: 92vh; overflow-y: auto;
-    box-shadow: 0 -8px 40px rgba(108,99,255,0.15);
-  }
-  .modal-header {
-    padding: 20px 20px 14px;
-    border-bottom: 1px solid var(--border);
-    display: flex; justify-content: space-between; align-items: center;
-    position: sticky; top: 0; background: var(--bg2); z-index: 1;
-    border-radius: 24px 24px 0 0;
-  }
-  .modal-header::before {
-    content: '';
-    position: absolute; top: 10px; left: 50%;
-    transform: translateX(-50%);
-    width: 36px; height: 4px;
-    background: var(--border2); border-radius: 2px;
-  }
-  .modal-title { font-weight: 700; font-size: 16px; color: var(--text); }
-  .modal-close {
-    background: var(--bg3); border: none; color: var(--text2);
-    cursor: pointer; font-size: 16px; padding: 6px; width: 32px; height: 32px;
-    border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    transition: all 0.15s;
-  }
-  .modal-close:hover { background: var(--bg4); color: var(--text); }
-  .modal-body { padding: 20px; }
-  .modal-footer {
-    padding: 14px 20px; border-top: 1px solid var(--border);
-    display: flex; gap: 8px; justify-content: flex-end;
-    background: var(--bg2);
-  }
+/* ── FORM ── */
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:7px;text-transform:uppercase;letter-spacing:.5px}
+.form-input,.form-select,.form-textarea{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:11px 13px;color:var(--text);font-family:var(--font);font-size:15px;transition:border-color .15s;min-height:44px}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--accent)}
+.form-textarea{resize:vertical;min-height:90px;font-size:14px}
 
-  /* ── FORM ── */
-  .form-group { margin-bottom: 14px; }
-  .form-label { display: block; font-size: 12px; font-weight: 700; color: var(--text2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .form-input, .form-select, .form-textarea {
-    width: 100%; background: var(--bg);
-    border: 1.5px solid var(--border); border-radius: 10px;
-    padding: 10px 14px; color: var(--text);
-    font-family: var(--font); font-size: 13px; transition: border-color 0.15s;
-  }
-  .form-input:focus, .form-select:focus, .form-textarea:focus {
-    outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light);
-  }
-  .form-textarea { resize: vertical; min-height: 80px; }
+/* ── STATUS RADIO ── */
+.status-radio-group{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.status-radio{display:none}
+.status-radio-label{display:flex;flex-direction:column;align-items:center;gap:5px;padding:14px 6px;border-radius:10px;border:2px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;text-align:center;transition:all .15s;color:var(--text2);-webkit-tap-highlight-color:transparent}
+.status-radio-label .icon{font-size:26px}
+.status-radio:checked + .status-radio-label.good{border-color:var(--good);background:var(--good-bg);color:var(--good)}
+.status-radio:checked + .status-radio-label.warn{border-color:var(--warn);background:var(--warn-bg);color:var(--warn)}
+.status-radio:checked + .status-radio-label.stop{border-color:var(--stop);background:var(--stop-bg);color:var(--stop)}
 
-  /* ── STATUS RADIO ── */
-  .status-radio-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-  .status-radio { display: none; }
-  .status-radio-label {
-    display: flex; flex-direction: column; align-items: center; gap: 4px;
-    padding: 12px 8px; border-radius: 12px;
-    border: 2px solid var(--border);
-    cursor: pointer; font-size: 12px; font-weight: 600;
-    text-align: center; transition: all 0.15s; color: var(--text2);
-    background: var(--bg);
-  }
-  .status-radio-label .icon { font-size: 22px; }
-  .status-radio:checked + .status-radio-label.good { border-color: #12B76A; background: #ECFDF3; color: #027A48; }
-  .status-radio:checked + .status-radio-label.warn { border-color: #F79009; background: #FFFAEB; color: #B54708; }
-  .status-radio:checked + .status-radio-label.stop { border-color: #F04438; background: #FFF4F3; color: #B42318; }
+/* ── CAMERA ── */
+.camera-area{background:#000;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+#camera-preview{width:100%;height:240px;object-fit:cover;display:block}
+.camera-controls{display:flex;gap:8px;justify-content:center;padding:10px;background:var(--bg4)}
+.photo-thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.photo-thumb{position:relative;width:72px;height:72px;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+.photo-thumb img{width:100%;height:100%;object-fit:cover}
+.photo-thumb-del{position:absolute;top:3px;right:3px;background:rgba(0,0,0,.75);color:#fff;border:none;width:20px;height:20px;border-radius:50%;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 
-  /* ── CAMERA ── */
-  .camera-area { background: var(--bg3); border: 1.5px solid var(--border); border-radius: 12px; overflow: hidden; }
-  #camera-preview { width: 100%; height: 200px; object-fit: cover; display: block; background: #000; }
-  .camera-controls { display: flex; gap: 8px; justify-content: center; padding: 10px; background: var(--bg4); }
-  .photo-thumbs { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
-  .photo-thumb { position: relative; width: 60px; height: 60px; border-radius: 8px; overflow: hidden; border: 1.5px solid var(--border); }
-  .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
-  .photo-thumb-del {
-    position: absolute; top: 2px; right: 2px;
-    background: rgba(0,0,0,0.6); color: #fff; border: none;
-    width: 18px; height: 18px; border-radius: 50%; font-size: 10px;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-  }
+/* ── TABLE ── */
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
+th{background:var(--bg3);color:var(--text2);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:11px 12px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg3)}
+.no-data{text-align:center;padding:50px 20px;color:var(--text3);font-size:13px}
+.no-data .icon{font-size:36px;margin-bottom:10px}
 
-  /* ── TABLE ── */
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th {
-    background: var(--bg3); color: var(--text3); font-weight: 700;
-    font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
-    padding: 10px 12px; text-align: left;
-    border-bottom: 2px solid var(--border); white-space: nowrap;
-  }
-  td { padding: 10px 12px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
-  tr:hover td { background: var(--bg3); }
-  .no-data { text-align: center; padding: 60px 20px; color: var(--text3); font-size: 13px; }
-  .no-data .icon { font-size: 40px; margin-bottom: 10px; }
+/* ── SETUP ── */
+.setup-step{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
+.setup-step h3{font-size:14px;font-weight:600;margin-bottom:6px}
+.setup-step p{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:12px}
 
-  /* ── SETUP PAGE ── */
-  .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  @media (max-width: 640px) {
-    .setup-grid { grid-template-columns: 1fr; }
-    .machine-grid { grid-template-columns: 1fr; }
-    .stats-row { grid-template-columns: repeat(2, 1fr); }
-  }
-  .setup-step { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
-  .setup-step-num {
-    width: 28px; height: 28px; background: var(--accent);
-    border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 700; color: #fff; margin-bottom: 10px;
-  }
-  .setup-step h3 { font-size: 14px; font-weight: 700; margin-bottom: 6px; color: var(--text); }
-  .setup-step p { font-size: 12px; color: var(--text2); line-height: 1.6; margin-bottom: 12px; }
+/* ── TOAST ── */
+.toast-container{position:fixed;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 10px);left:12px;right:12px;z-index:300;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:11px 16px;font-size:13px;display:flex;align-items:center;gap:10px;animation:slideUp .25s ease;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.toast.success{border-color:var(--good)}.toast.error{border-color:var(--stop)}.toast.warn{border-color:var(--warn)}
+@keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
 
-  /* ── TOAST ── */
-  .toast-container { position: fixed; bottom: 76px; right: 16px; z-index: 300; display: flex; flex-direction: column; gap: 8px; }
-  .toast {
-    background: var(--text); color: var(--bg2);
-    border-radius: 12px; padding: 10px 16px; font-size: 13px; font-weight: 600;
-    display: flex; align-items: center; gap: 8px;
-    animation: slideIn 0.25s cubic-bezier(0.34,1.56,0.64,1);
-    box-shadow: var(--shadow-card); max-width: 280px;
-  }
-  .toast.success { background: #027A48; color: #fff; }
-  .toast.error { background: #B42318; color: #fff; }
-  .toast.warn { background: #B54708; color: #fff; }
-  @keyframes slideIn {
-    from { transform: translateX(110%) scale(0.9); opacity: 0; }
-    to { transform: translateX(0) scale(1); opacity: 1; }
-  }
+/* ── SECTION HEADER ── */
+.section-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:10px;flex-wrap:wrap}
+.section-header-actions{display:flex;gap:8px;flex-wrap:wrap}
+.section-title{font-size:17px;font-weight:700}
+.section-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.divider{border:none;border-top:1px solid var(--border);margin:16px 0}
+.row-good td:first-child{border-left:3px solid var(--good)}
+.row-warn td:first-child{border-left:3px solid var(--warn)}
+.row-stop td:first-child{border-left:3px solid var(--stop)}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+#snap-canvas{display:none}
 
-  /* ── PERSON CHIP ── */
-  .person-chip {
-    display: inline-flex; align-items: center; gap: 5px;
-    background: var(--accent-light); border: 1.5px solid var(--accent);
-    border-radius: 20px; padding: 4px 10px; font-size: 11px; font-weight: 700;
-    color: var(--accent); max-width: 100px; overflow: hidden; white-space: nowrap;
-  }
-  .person-chip .shift-badge {
-    background: var(--accent); color: #fff;
-    font-size: 10px; padding: 1px 5px; border-radius: 4px;
-    font-family: var(--mono); font-weight: 700;
-  }
+/* ═══ AUTH ═══ */
+.auth-screen{position:fixed;inset:0;background:var(--bg);z-index:400;display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-screen.hidden{display:none}
+.auth-box{width:100%;max-width:380px}
+.auth-logo{text-align:center;margin-bottom:28px}
+.auth-logo-text{font-family:var(--mono);font-size:28px;font-weight:700;color:var(--accent2);letter-spacing:2px}
+.auth-logo-text span{color:var(--text3)}
+.auth-logo-sub{font-size:12px;color:var(--text3);margin-top:4px}
+.auth-tabs{display:flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:20px}
+.auth-tab{flex:1;padding:11px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;color:var(--text2);background:var(--bg2);transition:all .15s;-webkit-tap-highlight-color:transparent}
+.auth-tab.active{background:var(--accent);color:#fff}
+.auth-panel{display:none}
+.auth-panel.active{display:block}
+.auth-error{background:var(--stop-bg);border:1px solid var(--stop-b);color:var(--stop);border-radius:8px;padding:10px 13px;font-size:13px;margin-bottom:12px;display:none;line-height:1.5}
+.auth-error.show{display:block}
+.auth-success{background:var(--good-bg);border:1px solid var(--good-b);color:var(--good);border-radius:8px;padding:10px 13px;font-size:13px;margin-bottom:12px;display:none;line-height:1.5}
+.auth-success.show{display:block}
+.auth-hint{font-size:11px;color:var(--text3);text-align:center;margin-top:14px;line-height:1.6}
 
-  /* ── SECTION HEADER ── */
-  .section-header {
-    display: flex; justify-content: space-between; align-items: flex-start;
-    margin-bottom: 16px; gap: 8px; flex-wrap: wrap;
-  }
-  .section-title { font-size: 18px; font-weight: 700; color: var(--text); }
-  .section-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
-  .divider { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+/* ── USER MANAGEMENT ── */
+.user-row{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);gap:10px}
+.user-row:last-child{border-bottom:none}
+.user-row-info{min-width:0}
+.user-row-name{font-weight:600;font-size:13px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.user-row-meta{font-size:11px;color:var(--text2)}
 
-  /* ── LOG TABLE ROW STATUS ── */
-  .row-good td:first-child { border-left: 3px solid var(--good-bg); }
-  .row-warn td:first-child { border-left: 3px solid var(--warn-bg); }
-  .row-stop td:first-child { border-left: 3px solid var(--stop-bg); }
+/* ── SETTINGS ── */
+.settings-section{background:var(--bg2);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;overflow:hidden}
+.settings-section-title{padding:12px 16px;font-weight:700;font-size:13px;border-bottom:1px solid var(--border);background:var(--bg3);display:flex;align-items:center;gap:8px}
+.settings-section-body{padding:16px}
 
-  /* ── CHART ── */
-  .chart-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-  .chart-bar-label { width: 90px; font-size: 12px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .chart-bar-track { flex: 1; height: 20px; background: var(--bg3); border-radius: 6px; overflow: hidden; }
-  .chart-bar-fill { height: 100%; border-radius: 6px; transition: width 0.5s ease; display: flex; align-items: center; padding-left: 6px; font-size: 11px; color: #fff; font-family: var(--mono); font-weight: 700; }
-  .chart-bar-fill.good { background: var(--good-bg); }
-  .chart-bar-fill.warn { background: var(--warn-bg); }
-  .chart-bar-fill.stop { background: var(--stop-bg); }
-
-  /* ── LOADING ── */
-  .loading { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 40px; color: var(--text3); font-size: 13px; }
-  .spinner { width: 18px; height: 18px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.6s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ── ALERT ── */
-  .alert { padding: 12px 14px; border-radius: 12px; font-size: 13px; margin-bottom: 14px; border: 1.5px solid; font-weight: 500; }
-  .alert-info { background: #EFF8FF; border-color: #B2DDFF; color: #175CD3; }
-  .alert-warn { background: #FFFAEB; border-color: #FEC84B; color: #B54708; }
-  .alert-danger { background: #FFF4F3; border-color: #FDA29B; color: #B42318; }
-
-  /* ── ADMIN TABS ── */
-  .admin-tab { transition: all 0.15s; }
-  .admin-tab:hover { color: var(--text) !important; }
-  .admin-tab.active { color: var(--accent) !important; border-bottom-color: var(--accent) !important; }
-
-  /* ── USER CARD ── */
-  .user-row {
-    display: flex; align-items: center; gap: 12px;
-    padding: 12px 14px; border-radius: 12px;
-    border: 1px solid var(--border); margin-bottom: 8px;
-    background: var(--bg2); box-shadow: var(--shadow);
-  }
-  .user-avatar { width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; }
-  .user-role-badge { font-size: 10px; padding: 3px 8px; border-radius: 10px; font-family: var(--mono); font-weight: 700; }
-  .role-admin { background: #FFFAEB; color: #B54708; border: 1px solid #FEC84B; }
-  .role-user { background: #ECFDF3; color: #027A48; border: 1px solid #6CE9A6; }
-  .role-pending { background: #EFF8FF; color: #175CD3; border: 1px solid #B2DDFF; }
-  .role-blocked { background: #FFF4F3; color: #B42318; border: 1px solid #FDA29B; }
-
-  /* ── USER FILTER BTN ── */
-  .user-filter-btn { background: var(--bg3); border-color: var(--border); color: var(--text2); }
-  .user-filter-btn.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
-
-  /* ── SCROLLBAR ── */
-  ::-webkit-scrollbar { width: 4px; height: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
-
-  /* ── HIDDEN ── */
-  #hidden-video { display: none; }
-  #snap-canvas { display: none; }
+/* ── DESKTOP ── */
+@media(min-width:768px){
+  .nav-tabs{display:flex}
+  .bottom-nav,.fab{display:none}
+  .main{padding:20px}
+  .stats-row{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
+  .machine-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+  .topbar{padding:0 20px}
+  .modal-overlay{align-items:center;padding:20px}
+  .modal{border-radius:14px;max-height:88vh}
+  .modal-header::before{display:none}
+  .modal-title,.modal-close{margin-top:0}
+  .modal-footer .btn{flex:initial}
+  .toast-container{left:auto;right:16px;bottom:16px;max-width:320px}
+  .auth-screen{background:radial-gradient(ellipse at center,#161b22 0%,var(--bg) 70%)}
+}
 </style>
 </head>
 <body>
 
-<!-- ═══════════ FIREBASE CONFIG NOTICE ═══════════ -->
-<div id="firebase-config-notice" class="fullscreen-overlay" style="display:none;z-index:9999">
-  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:28px;max-width:480px;width:100%;box-shadow:var(--shadow-card)">
-    <div style="font-size:36px;text-align:center;margin-bottom:12px">🔥</div>
-    <div style="font-size:18px;font-weight:700;margin-bottom:6px;color:var(--text);text-align:center">ตั้งค่า Firebase</div>
-    <div style="font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.7;text-align:center">กรอก Firebase Config จาก Project ของคุณ<br>ดูคู่มือใน README.md</div>
-    <div style="display:grid;gap:10px">
-      <input id="fc-apiKey" class="form-input" placeholder="apiKey: AIzaSy...">
-      <input id="fc-authDomain" class="form-input" placeholder="authDomain: myapp.firebaseapp.com">
-      <input id="fc-projectId" class="form-input" placeholder="projectId: my-pm-system">
-      <input id="fc-storageBucket" class="form-input" placeholder="storageBucket: myapp.appspot.com">
-      <input id="fc-messagingSenderId" class="form-input" placeholder="messagingSenderId: 123456789">
-      <input id="fc-appId" class="form-input" placeholder="appId: 1:123:web:abc">
+<!-- AUTH SCREEN -->
+<div class="auth-screen" id="auth-screen">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="auth-logo-text">PM<span>/</span>SYS</div>
+      <div class="auth-logo-sub">ระบบบำรุงรักษาเชิงป้องกัน</div>
     </div>
-    <div style="display:flex;gap:8px;margin-top:16px">
-      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="saveFirebaseConfig()">💾 บันทึกและเข้าสู่ระบบ</button>
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">เข้าสู่ระบบ</div>
+      <div class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">สมัครใช้งาน</div>
     </div>
-    <div id="fc-error" style="margin-top:10px;font-size:12px;color:#B42318;display:none;text-align:center;font-weight:600"></div>
-  </div>
-</div>
-
-<!-- ═══════════ LOGIN SCREEN ═══════════ -->
-<div id="login-screen" class="fullscreen-overlay" style="display:none">
-
-  <!-- Decorative blobs -->
-  <div style="position:absolute;top:-60px;right:-60px;width:220px;height:220px;background:var(--login-blob1);border-radius:50%;opacity:0.7;pointer-events:none"></div>
-  <div style="position:absolute;bottom:-40px;left:-40px;width:160px;height:160px;background:var(--login-blob2);border-radius:50%;opacity:0.6;pointer-events:none"></div>
-
-  <div style="width:100%;max-width:360px;position:relative;z-index:1">
-    <!-- Logo -->
-    <div style="text-align:center;margin-bottom:36px">
-      <div style="width:72px;height:72px;background:var(--accent);border-radius:22px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;box-shadow:0 8px 24px rgba(108,99,255,0.35)">
-        <span style="font-size:36px">🏭</span>
+    <!-- LOGIN -->
+    <div class="auth-panel active" id="panel-login">
+      <div class="auth-error" id="login-error"></div>
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" class="form-input" id="login-username" placeholder="username"
+          autocomplete="username" autocapitalize="none"
+          onkeydown="if(event.key==='Enter')document.getElementById('login-password').focus()">
       </div>
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:700;color:var(--text);letter-spacing:2px">PM/SYS</div>
-      <div style="font-size:13px;color:var(--text2);margin-top:4px">Machine Preventive Maintenance</div>
-    </div>
-
-    <!-- Card -->
-    <div style="background:var(--bg2);border-radius:24px;padding:28px;box-shadow:var(--shadow-card);border:1px solid var(--border)">
-      <div style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px">ยินดีต้อนรับ 👋</div>
-      <div style="font-size:13px;color:var(--text2);margin-bottom:24px">เข้าสู่ระบบด้วยบัญชี Google</div>
-
-      <button onclick="signInWithGoogle()" id="btn-google-login"
-        style="width:100%;display:flex;align-items:center;justify-content:center;gap:12px;
-               background:var(--bg2);color:var(--text);border:1.5px solid var(--border2);border-radius:12px;
-               padding:14px 16px;font-size:14px;font-weight:600;cursor:pointer;
-               font-family:'IBM Plex Sans Thai',sans-serif;transition:all 0.15s;
-               box-shadow:var(--shadow)">
-        <svg width="20" height="20" viewBox="0 0 18 18"><path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/><path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/><path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/><path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/></svg>
-        Sign in with Google
-      </button>
-
-      <div id="login-error" style="margin-top:12px;font-size:12px;color:#B42318;text-align:center;display:none;font-weight:600;background:#FFF4F3;padding:8px 12px;border-radius:8px;border:1px solid #FDA29B"></div>
-
-      <div id="login-pending" style="margin-top:12px;display:none">
-        <div style="background:#FFFAEB;border:1.5px solid #FEC84B;border-radius:12px;padding:16px;text-align:center">
-          <div style="font-size:28px;margin-bottom:8px">⏳</div>
-          <div style="font-size:14px;font-weight:700;color:#B54708;margin-bottom:4px">รอการอนุมัติจาก Admin</div>
-          <div style="font-size:11px;color:#926009;margin-bottom:4px" id="pending-email-display"></div>
-          <div style="font-size:12px;color:#B54708;margin-bottom:14px;line-height:1.6">Admin จะเห็นแจ้งเตือนใน Admin Panel<br>กด "รีเฟรชสถานะ" หลัง Admin Approve แล้ว</div>
-          <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
-            <button onclick="recheckApproval()" style="background:var(--accent);color:#fff;border:none;border-radius:10px;padding:9px 16px;font-size:13px;cursor:pointer;font-family:'IBM Plex Sans Thai',sans-serif;font-weight:600">🔄 รีเฟรชสถานะ</button>
-            <button onclick="signOutFromPending()" style="background:var(--bg3);border:1.5px solid var(--border);color:var(--text2);border-radius:10px;padding:9px 16px;font-size:13px;cursor:pointer;font-family:'IBM Plex Sans Thai',sans-serif;font-weight:600">ออกจากระบบ</button>
-          </div>
-        </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-input" id="login-password" placeholder="••••••"
+          autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn btn-primary btn-full" id="btn-login" onclick="doLogin()">เข้าสู่ระบบ</button>
+      <div class="auth-hint">
+        ครั้งแรก? กด <strong style="color:var(--text2)">สมัครใช้งาน</strong> ด้านบน<br>
+        ผู้สมัครคนแรกจะได้สิทธิ์ Admin อัตโนมัติ
       </div>
     </div>
-
-    <div style="text-align:center;margin-top:20px">
-      <button onclick="showFirebaseConfig()" style="background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;font-family:'IBM Plex Sans Thai',sans-serif;font-weight:500">⚙️ ตั้งค่า Firebase Config</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════ ADMIN PANEL ═══════════ -->
-<div id="admin-panel" style="display:none">
-  <div class="modal-overlay open" id="modal-admin" style="z-index:500">
-    <div class="modal" style="max-width:780px;max-height:92vh">
-      <div class="modal-header" style="background:#161b22">
-        <div style="display:flex;align-items:center;gap:10px">
-          <span style="font-size:18px">🛡️</span>
-          <div class="modal-title">Admin Panel</div>
-        </div>
-        <button class="modal-close" onclick="closeAdminPanel()">✕</button>
+    <!-- REGISTER -->
+    <div class="auth-panel" id="panel-register">
+      <div class="auth-error" id="reg-error"></div>
+      <div class="auth-success" id="reg-success"></div>
+      <div class="form-group">
+        <label class="form-label">ชื่อ-นามสกุล</label>
+        <input type="text" class="form-input" id="reg-name" placeholder="สมชาย ใจดี">
       </div>
-      <!-- Admin Tabs -->
-      <div style="display:flex;border-bottom:1px solid #30363d;background:#161b22;position:sticky;top:53px;z-index:1">
-        <div class="admin-tab active" onclick="showAdminTab('users')" data-atab="users" style="padding:10px 16px;cursor:pointer;font-size:13px;font-weight:500;color:#9198a1;border-bottom:2px solid transparent;transition:all 0.15s">👥 จัดการ Users</div>
-        <div class="admin-tab" onclick="showAdminTab('machines-admin')" data-atab="machines-admin" style="padding:10px 16px;cursor:pointer;font-size:13px;font-weight:500;color:#9198a1;border-bottom:2px solid transparent;transition:all 0.15s">🏭 เครื่องจักร</div>
-        <div class="admin-tab" onclick="showAdminTab('persons-admin')" data-atab="persons-admin" style="padding:10px 16px;cursor:pointer;font-size:13px;font-weight:500;color:#9198a1;border-bottom:2px solid transparent;transition:all 0.15s">👤 บุคลากร</div>
-        <div class="admin-tab" onclick="showAdminTab('config-admin')" data-atab="config-admin" style="padding:10px 16px;cursor:pointer;font-size:13px;font-weight:500;color:#9198a1;border-bottom:2px solid transparent;transition:all 0.15s">⚙️ ตั้งค่า</div>
-        <div class="admin-tab" onclick="showAdminTab('logs-admin')" data-atab="logs-admin" style="padding:10px 16px;cursor:pointer;font-size:13px;font-weight:500;color:#9198a1;border-bottom:2px solid transparent;transition:all 0.15s">📋 Activity Log</div>
+      <div class="form-group">
+        <label class="form-label">Username (a-z, 0-9, _)</label>
+        <input type="text" class="form-input" id="reg-username" placeholder="somchai"
+          autocapitalize="none" autocomplete="username">
       </div>
-      <div class="modal-body" style="padding:16px">
-
-        <!-- USERS TAB -->
-        <div id="atab-users" class="admin-tab-content">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-            <div style="display:flex;gap:6px">
-              <button class="btn btn-sm user-filter-btn active" data-filter="all" onclick="filterUserList('all',this)">ทั้งหมด</button>
-              <button class="btn btn-sm user-filter-btn" data-filter="pending" onclick="filterUserList('pending',this)" style="border-color:var(--accent);color:var(--accent2)">⏳ Pending <span id="pending-count-badge" style="background:var(--stop);color:#fff;font-size:10px;padding:1px 5px;border-radius:8px;margin-left:2px">0</span></button>
-              <button class="btn btn-sm user-filter-btn" data-filter="user" onclick="filterUserList('user',this)">✅ Users</button>
-              <button class="btn btn-sm user-filter-btn" data-filter="admin" onclick="filterUserList('admin',this)" style="border-color:var(--warn);color:var(--warn)">🛡️ Admin</button>
-              <button class="btn btn-sm user-filter-btn" data-filter="blocked" onclick="filterUserList('blocked',this)" style="border-color:var(--stop);color:var(--stop)">🚫 Blocked</button>
-            </div>
-            <button class="btn btn-sm" onclick="loadUsers()">🔄 รีเฟรช</button>
-          </div>
-          <div id="admin-users-list"><div class="loading"><div class="spinner"></div>กำลังโหลด...</div></div>
-        </div>
-
-        <!-- MACHINES ADMIN TAB -->
-        <div id="atab-machines-admin" class="admin-tab-content" style="display:none">
-          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-            <button class="btn btn-sm" onclick="document.getElementById('admin-machine-excel').click()">📥 Import Machine Excel</button>
-            <input type="file" id="admin-machine-excel" accept=".xlsx,.xls" style="display:none" onchange="importMachineExcel(this);pushMasterData()">
-            <button class="btn btn-primary btn-sm" onclick="openAddMachineModal()">+ เพิ่มเครื่องจักร</button>
-          </div>
-          <div id="admin-machines-table"></div>
-        </div>
-
-        <!-- PERSONS ADMIN TAB -->
-        <div id="atab-persons-admin" class="admin-tab-content" style="display:none">
-          <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-            <button class="btn btn-sm" onclick="document.getElementById('admin-person-excel').click()">📥 Import Person Excel</button>
-            <input type="file" id="admin-person-excel" accept=".xlsx,.xls" style="display:none" onchange="importPersonExcel(this);pushMasterData()">
-            <button class="btn btn-primary btn-sm" onclick="openAddPersonModal()">+ เพิ่มบุคลากร</button>
-          </div>
-          <div id="admin-persons-table"></div>
-        </div>
-
-        <!-- CONFIG TAB -->
-        <div id="atab-config-admin" class="admin-tab-content" style="display:none">
-          <div style="display:grid;gap:14px">
-            <div class="card">
-              <div class="card-title">☁️ GitHub Gist (ส่งออกข้อมูล)</div>
-              <div class="form-group">
-                <label class="form-label">GitHub Token (กลาง)</label>
-                <input type="password" class="form-input" id="admin-gist-token" placeholder="ghp_xxxx">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Gist ID</label>
-                <input type="text" class="form-input" id="admin-gist-id" placeholder="gist id">
-              </div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <button class="btn btn-primary btn-sm" onclick="saveAdminGistConfig()">💾 บันทึก</button>
-                <button class="btn btn-sm" onclick="createNewGist()">✨ สร้าง Gist ใหม่</button>
-                <button class="btn btn-sm" onclick="pushToGist()">☁️ Push ข้อมูล</button>
-              </div>
-            </div>
-            <div class="card">
-              <div class="card-title">🔐 Admin Emails</div>
-              <div style="font-size:12px;color:#9198a1;margin-bottom:8px">Email ที่มีสิทธิ์ Admin (1 บรรทัด 1 email)</div>
-              <textarea class="form-textarea" id="admin-emails-list" style="min-height:100px;font-family:var(--mono);font-size:12px"></textarea>
-              <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="saveAdminEmails()">💾 บันทึก Admin Emails</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- ACTIVITY LOG TAB -->
-        <div id="atab-logs-admin" class="admin-tab-content" style="display:none">
-          <div style="display:flex;justify-content:space-between;margin-bottom:12px">
-            <div style="font-size:13px;color:#9198a1">บันทึกกิจกรรมทั้งหมด</div>
-            <button class="btn btn-sm btn-success" onclick="exportActivityLog()">📥 Export</button>
-          </div>
-          <div id="admin-activity-log"></div>
-        </div>
-
+      <div class="form-group">
+        <label class="form-label">Password (อย่างน้อย 4 ตัว)</label>
+        <input type="password" class="form-input" id="reg-password"
+          autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()">
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- ADD/EDIT MACHINE MODAL -->
-<div class="modal-overlay" id="modal-add-machine">
-  <div class="modal" style="max-width:420px">
-    <div class="modal-header"><div class="modal-title" id="add-machine-title">เพิ่มเครื่องจักร</div><button class="modal-close" onclick="closeModal('modal-add-machine')">✕</button></div>
-    <div class="modal-body">
-      <input type="hidden" id="edit-machine-idx">
-      <div class="form-group"><label class="form-label">Tag *</label><input class="form-input" id="m-tag" placeholder="MC-001"></div>
-      <div class="form-group"><label class="form-label">Description *</label><input class="form-input" id="m-desc" placeholder="เครื่องกลึง CNC"></div>
-      <div class="form-group"><label class="form-label">Type</label><input class="form-input" id="m-type" placeholder="CNC Lathe"></div>
-      <div class="form-group"><label class="form-label">Location</label><input class="form-input" id="m-loc" placeholder="Building A"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" onclick="closeModal('modal-add-machine')">ยกเลิก</button>
-      <button class="btn btn-primary" onclick="saveMachineEntry()">💾 บันทึก</button>
-    </div>
-  </div>
-</div>
-
-<!-- ADD/EDIT PERSON MODAL -->
-<div class="modal-overlay" id="modal-add-person">
-  <div class="modal" style="max-width:420px">
-    <div class="modal-header"><div class="modal-title" id="add-person-title">เพิ่มบุคลากร</div><button class="modal-close" onclick="closeModal('modal-add-person')">✕</button></div>
-    <div class="modal-body">
-      <input type="hidden" id="edit-person-idx">
-      <div class="form-group"><label class="form-label">ID</label><input class="form-input" id="p-id" placeholder="EMP001"></div>
-      <div class="form-group"><label class="form-label">Name *</label><input class="form-input" id="p-name" placeholder="สมชาย ใจดี"></div>
-      <div class="form-group"><label class="form-label">Shift</label>
-        <select class="form-select" id="p-shift">
-          <option value="">—</option><option>A</option><option>B</option><option>C</option><option>Day</option><option>Night</option>
+      <div class="form-group">
+        <label class="form-label">Shift</label>
+        <select class="form-select" id="reg-shift">
+          <option value="A">Shift A</option><option value="B">Shift B</option>
+          <option value="C">Shift C</option><option value="-">ไม่ระบุ</option>
         </select>
       </div>
-      <div class="form-group"><label class="form-label">Level</label>
-        <select class="form-select" id="p-level">
-          <option value="">—</option><option>Technician</option><option>Senior Technician</option><option>Supervisor</option><option>Engineer</option><option>Manager</option>
-        </select>
+      <button class="btn btn-primary btn-full" id="btn-register" onclick="doRegister()">สมัครใช้งาน</button>
+      <div class="auth-hint">
+        ถ้าเป็นคนแรกในระบบ จะได้สิทธิ์ <strong style="color:var(--accent2)">Admin</strong> ทันที<br>
+        ถ้ามี Admin แล้ว ต้องรออนุมัติก่อนเข้าใช้งาน
       </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn" onclick="closeModal('modal-add-person')">ยกเลิก</button>
-      <button class="btn btn-primary" onclick="savePersonEntry()">💾 บันทึก</button>
     </div>
   </div>
 </div>
@@ -813,353 +335,229 @@
 <div class="topbar">
   <div class="topbar-left">
     <div class="topbar-logo">PM<span>/</span>SYS</div>
-    <div id="topbar-date" style="font-size:11px;color:var(--text3)"></div>
+    <div class="topbar-date" id="topbar-date"></div>
   </div>
   <div class="topbar-right">
-    <!-- Active person chip (shows selected inspector) -->
-    <span id="active-person-chip"></span>
-    <!-- Person selector — icon only on mobile -->
-    <button class="btn btn-sm" onclick="openModal('modal-person')" id="btn-person-topbar" title="เลือกผู้ตรวจ">
-      <span id="topbar-person-icon">👤</span>
-      <span class="topbar-label-desktop">เลือกผู้ตรวจ</span>
-    </button>
-    <!-- Theme toggle -->
-    <button class="theme-toggle" onclick="toggleTheme()" id="btn-theme" title="เปลี่ยน Theme">🌙</button>
-    <!-- Admin button -->
-    <div id="topbar-admin-btn" style="display:none;position:relative">
-      <button class="btn btn-sm" style="border-color:#d29922;color:#d29922;padding:4px 10px" onclick="openAdminPanel()" title="Admin Panel">
-        🛡️<span class="topbar-label-desktop"> Admin</span>
-      </button>
-      <span id="pending-badge" style="display:none;position:absolute;top:-5px;right:-5px;background:#da3633;color:#fff;font-size:10px;font-weight:700;min-width:17px;height:17px;border-radius:9px;align-items:center;justify-content:center;font-family:monospace;padding:0 3px;pointer-events:none;line-height:1">0</span>
+    <div class="topbar-user" id="topbar-user-info" style="display:none" onclick="confirmLogout()">
+      <span class="topbar-user-name" id="topbar-user-name"></span>
+      <span class="topbar-role-badge" id="topbar-role-badge"></span>
     </div>
-    <!-- User info -->
-    <div id="topbar-user" style="display:none;align-items:center;gap:6px">
-      <img id="topbar-avatar" width="28" height="28" style="border-radius:50%;border:2px solid #30363d;flex-shrink:0;cursor:pointer" onclick="openAdminPanel()" title="Admin Panel">
-      <span id="topbar-username" style="font-size:11px;color:#9198a1;max-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:none" class="topbar-name"></span>
-      <button class="btn btn-sm btn-danger" onclick="signOut()" style="padding:3px 8px;font-size:11px">ออก</button>
-    </div>
+    <button class="btn btn-icon" id="btn-settings-nav" onclick="showPage('settings')" title="ตั้งค่า" style="display:none">⚙️</button>
   </div>
 </div>
 
-<!-- BOTTOM NAV -->
-<nav class="bottom-nav" role="navigation" aria-label="เมนูหลัก">
-  <button class="bottom-nav-item active" onclick="showPage('dashboard')" data-page="dashboard">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
-    <span>หน้าหลัก</span>
-    <div class="nav-dot"></div>
-  </button>
-  <button class="bottom-nav-item" onclick="showPage('machines')" data-page="machines">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
-    <span>เครื่องจักร</span>
-    <div class="nav-dot"></div>
-  </button>
-  <div class="bottom-nav-fab">
-    <button class="bottom-nav-fab-btn" onclick="openPmModal(null)" aria-label="บันทึก PM">
-      <svg viewBox="0 0 24 24" fill="none" stroke="white"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-    </button>
-  </div>
-  <button class="bottom-nav-item" onclick="showPage('log')" data-page="log">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
-    <span>PM Log</span>
-    <div class="nav-dot"></div>
-  </button>
-  <button class="bottom-nav-item" onclick="showPage('summary')" data-page="summary">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-    <span>สรุป</span>
-    <div class="nav-dot"></div>
-  </button>
-</nav>
+<!-- DESKTOP NAV -->
+<div class="nav-tabs" style="display:none" id="desktop-nav">
+  <div class="nav-tab active" onclick="showPage('dashboard')" data-page="dashboard">📊 Dashboard</div>
+  <div class="nav-tab" onclick="showPage('machines')" data-page="machines">🏭 เครื่องจักร <span class="badge" id="badge-machines">0</span></div>
+  <div class="nav-tab" onclick="showPage('log')" data-page="log">📋 บันทึก PM <span class="badge" id="badge-log">0</span></div>
+  <div class="nav-tab" onclick="showPage('summary')" data-page="summary">📈 สรุปผล</div>
+  <div class="nav-tab" id="nav-settings" style="display:none" onclick="showPage('settings')" data-page="settings">⚙️ ตั้งค่า</div>
+</div>
 
 <!-- MAIN -->
 <div class="main">
 
-  <!-- ═══════════ DASHBOARD ═══════════ -->
-  <div class="page active" id="page-dashboard">
-    <div class="page-greeting">
-      <div class="greeting-sub">สวัสดี 👋</div>
-      <div class="greeting-title" id="greeting-name">PM System</div>
-      <div class="greeting-desc" id="dash-subtitle">กำลังโหลดข้อมูล...</div>
-    </div>
+<!-- DASHBOARD -->
+<div class="page active" id="page-dashboard">
+  <div class="section-header">
+    <div><div class="section-title">ภาพรวม</div><div class="section-sub" id="dash-subtitle">—</div></div>
+    <button class="btn btn-sm" onclick="syncFromGist().then(()=>showPage('dashboard'))">🔄 รีเฟรช</button>
+  </div>
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-num" id="stat-total" style="color:var(--text)">0</div><div class="stat-label">เครื่องทั้งหมด</div></div>
+    <div class="stat-card good"><div class="stat-num" id="stat-good">0</div><div class="stat-label">✅ Good</div></div>
+    <div class="stat-card warn"><div class="stat-num" id="stat-warn">0</div><div class="stat-label">⚠️ Warning</div></div>
+    <div class="stat-card stop"><div class="stat-num" id="stat-stop">0</div><div class="stat-label">🛑 Under Repair</div></div>
+  </div>
+  <div class="card" style="margin-bottom:12px">
+    <div class="card-title">⚠️ ต้องดูแล</div>
+    <div id="dashboard-warn-list" class="machine-grid"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📋 บันทึกล่าสุด</div>
+    <div id="dashboard-recent"></div>
+  </div>
+</div>
 
-    <div class="stats-row" id="stats-row">
-      <div class="stat-card" style="border-color:var(--border)">
-        <div class="stat-num" style="color:var(--text)" id="stat-total">0</div>
-        <div class="stat-label">เครื่องจักรทั้งหมด</div>
-      </div>
-      <div class="stat-card good">
-        <div class="stat-num" id="stat-good">0</div>
-        <div class="stat-label">✅ Good</div>
-      </div>
-      <div class="stat-card warn">
-        <div class="stat-num" id="stat-warn">0</div>
-        <div class="stat-label">⚠️ Warning</div>
-      </div>
-      <div class="stat-card stop">
-        <div class="stat-num" id="stat-stop">0</div>
-        <div class="stat-label">🛑 Under Repair</div>
-      </div>
-      <div class="stat-card" style="border-color:var(--accent);background:rgba(31,111,235,0.07)">
-        <div class="stat-num" style="color:var(--accent2)" id="stat-logs">0</div>
-        <div class="stat-label">บันทึกวันนี้</div>
-      </div>
-    </div>
-
-    <!-- Warning & Stop alerts -->
-    <div id="alert-area"></div>
-
-    <div class="card">
-      <div class="card-title">⚠️ เครื่องจักรที่ต้องระวัง</div>
-      <div id="dashboard-warn-list" class="machine-grid"></div>
+<!-- MACHINES -->
+<div class="page" id="page-machines">
+  <div class="section-header">
+    <div><div class="section-title">รายการเครื่องจักร</div><div class="section-sub" id="machine-count-sub">—</div></div>
+    <div class="section-header-actions">
+      <button class="btn btn-sm" onclick="document.getElementById('import-machine-excel').click()">📥 Excel</button>
+      <input type="file" id="import-machine-excel" accept=".xlsx,.xls" style="display:none" onchange="importMachineExcel(this)">
+      <button class="btn btn-primary btn-sm" onclick="openPmModal(null)">+ PM</button>
     </div>
   </div>
+  <div class="filter-row">
+    <input type="text" class="filter-input" id="search-machine" placeholder="🔍 ค้นหา Tag / ชื่อ..." oninput="renderMachines()">
+    <select class="filter-select" id="filter-type" onchange="renderMachines()"><option value="">ทุก Type</option></select>
+    <select class="filter-select" id="filter-location" onchange="renderMachines()"><option value="">ทุก Location</option></select>
+  </div>
+  <div class="filter-bar">
+    <div class="filter-chip active" onclick="toggleStatusFilter('all',this)">ทั้งหมด</div>
+    <div class="filter-chip good" onclick="toggleStatusFilter('good',this)">✅ Good</div>
+    <div class="filter-chip warn" onclick="toggleStatusFilter('warning',this)">⚠️ Warning</div>
+    <div class="filter-chip stop" onclick="toggleStatusFilter('stopped',this)">🛑 Under Repair</div>
+  </div>
+  <div class="machine-grid" id="machine-grid">
+    <div class="no-data"><div class="icon">🏭</div><div>ยังไม่มีข้อมูลเครื่องจักร<br>นำเข้าจาก Excel ในหน้าตั้งค่า</div></div>
+  </div>
+</div>
 
-  <!-- ═══════════ MACHINES ═══════════ -->
-  <div class="page" id="page-machines">
-    <div class="section-header">
-      <div>
-        <div class="section-title">รายการเครื่องจักร</div>
-        <div class="section-sub" id="machine-count-sub">—</div>
-      </div>
-      <div style="display:flex;gap:8px">
-        <div id="machines-admin-btns" style="display:none">
-          <button class="btn btn-sm" onclick="document.getElementById('import-machine-excel').click()">📥 นำเข้า Machine Excel</button>
-          <input type="file" id="import-machine-excel" accept=".xlsx,.xls" style="display:none" onchange="importMachineExcel(this)">
-        </div>
-        <button class="btn btn-primary btn-sm" onclick="openPmModal(null)">+ บันทึก PM</button>
-      </div>
-    </div>
-
-    <div class="filter-bar">
-      <input type="text" class="filter-input" id="search-machine" placeholder="🔍 ค้นหา Tag / ชื่อ / Location..." oninput="renderMachines()">
-      <select class="filter-select" id="filter-type" onchange="renderMachines()">
-        <option value="">ทุก Type</option>
+<!-- LOG -->
+<div class="page" id="page-log">
+  <div class="section-header">
+    <div><div class="section-title">บันทึก PM</div></div>
+    <div class="section-header-actions">
+      <input type="date" class="filter-input" id="log-filter-date" style="min-width:130px;flex:0" onchange="renderLog()">
+      <select class="filter-select" id="log-filter-status" onchange="renderLog()">
+        <option value="">ทุกสถานะ</option>
+        <option value="good">✅ Good</option>
+        <option value="warning">⚠️ Warning</option>
+        <option value="stopped">🛑 Under Repair</option>
       </select>
-      <select class="filter-select" id="filter-location" onchange="renderMachines()">
-        <option value="">ทุก Location</option>
-      </select>
-      <div class="filter-chip active" onclick="toggleStatusFilter('all',this)" data-filter="all">ทั้งหมด</div>
-      <div class="filter-chip good" onclick="toggleStatusFilter('good',this)" data-filter="good">✅ Good</div>
-      <div class="filter-chip warn" onclick="toggleStatusFilter('warning',this)" data-filter="warning">⚠️ Warning</div>
-      <div class="filter-chip stop" onclick="toggleStatusFilter('stopped',this)" data-filter="stopped">🛑 Under Repair</div>
-    </div>
-
-    <div class="machine-grid" id="machine-grid">
-      <div class="no-data">
-        <div class="icon">🏭</div>
-        <div>ยังไม่มีข้อมูลเครื่องจักร<br>นำเข้าไฟล์ Excel ก่อนเริ่มใช้งาน</div>
-      </div>
+      <button class="btn btn-sm" onclick="exportCSV()">📥 CSV</button>
     </div>
   </div>
+  <div class="table-wrap">
+    <table><thead><tr>
+      <th>เวลา</th><th>Tag</th><th>เครื่องจักร</th><th>สถานะ</th>
+      <th>ผู้ตรวจ</th><th>หมายเหตุ</th><th>รูป</th><th></th>
+    </tr></thead><tbody id="log-tbody"></tbody></table>
+  </div>
+</div>
 
-  <!-- ═══════════ LOG ═══════════ -->
-  <div class="page" id="page-log">
-    <div class="section-header">
-      <div>
-        <div class="section-title">บันทึก PM ทั้งหมด</div>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <input type="date" class="filter-input" id="log-filter-date" style="min-width:140px" onchange="renderLog()">
-        <select class="filter-select" id="log-filter-status" onchange="renderLog()">
-          <option value="">ทุกสถานะ</option>
-          <option value="good">✅ Good</option>
-          <option value="warning">⚠️ Warning</option>
-          <option value="stopped">🛑 Under Repair</option>
-        </select>
-        <button class="btn btn-sm" onclick="exportCSV()">📥 Export CSV</button>
-      </div>
-    </div>
-
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>วันที่-เวลา</th>
-            <th>Tag</th>
-            <th>เครื่องจักร</th>
-            <th>สถานะ</th>
-            <th>ผู้ตรวจ</th>
-            <th>หมายเหตุ</th>
-            <th>รูปภาพ</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="log-tbody">
-          <tr><td colspan="8" class="no-data"><div class="icon">📋</div><div>ยังไม่มีบันทึก PM</div></td></tr>
-        </tbody>
-      </table>
+<!-- SUMMARY -->
+<div class="page" id="page-summary">
+  <div class="section-header">
+    <div><div class="section-title">สรุปผล</div></div>
+    <div class="section-header-actions">
+      <input type="month" class="filter-input" id="summary-month" style="min-width:130px;flex:0" onchange="renderSummary()">
+      <button class="btn btn-sm btn-success" onclick="exportReport()">📊 Export</button>
     </div>
   </div>
+  <div id="summary-content"></div>
+</div>
 
-  <!-- ═══════════ SUMMARY ═══════════ -->
-  <div class="page" id="page-summary">
-    <div class="section-header">
-      <div class="section-title">สรุปผล PM</div>
-      <div style="display:flex;gap:8px">
-        <input type="month" class="filter-input" id="summary-month" style="min-width:140px" onchange="renderSummary()">
-        <button class="btn btn-sm btn-success" onclick="exportReport()">📊 Export Report</button>
-      </div>
-    </div>
-
-    <div class="setup-grid" style="margin-bottom:16px">
-      <div class="card">
-        <div class="card-title">สถานะตามประเภท (Type)</div>
-        <div id="summary-by-type"></div>
-      </div>
-      <div class="card">
-        <div class="card-title">สถานะตาม Location</div>
-        <div id="summary-by-location"></div>
-      </div>
-    </div>
-    <div class="card">
-      <div class="card-title">ประวัติสถานะรายเครื่อง</div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Tag</th>
-              <th>เครื่องจักร</th>
-              <th>Good</th>
-              <th>Warning</th>
-              <th>Under Repair</th>
-              <th>ตรวจล่าสุด</th>
-              <th>สถานะล่าสุด</th>
-            </tr>
-          </thead>
-          <tbody id="summary-tbody"></tbody>
-        </table>
-      </div>
-    </div>
+<!-- SETTINGS -->
+<div class="page" id="page-settings">
+  <div class="section-header">
+    <div><div class="section-title">⚙️ ตั้งค่าระบบ</div></div>
+    <button class="btn btn-sm btn-danger" onclick="confirmLogout()">🚪 ออกจากระบบ</button>
   </div>
 
-  <!-- ═══════════ SETTINGS ═══════════ -->
-  <div class="page" id="page-settings">
-    <div class="section-title" style="margin-bottom:16px">⚙️ ตั้งค่าระบบ</div>
-
-    <div class="setup-grid">
-      <!-- GIST -->
-      <div class="setup-step">
-        <div class="setup-step-num">1</div>
-        <h3>GitHub Gist Token</h3>
-        <p>สร้าง Personal Access Token ที่ github.com/settings/tokens (ต้องการ scope: gist) แล้วใส่ด้านล่าง</p>
+  <div class="settings-section">
+    <div class="settings-section-title">👥 จัดการผู้ใช้งาน</div>
+    <div class="settings-section-body">
+      <div id="user-gist-setup-box">
+        <p style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.6">
+          ตั้งค่า <strong>User Gist</strong> เพื่อเก็บข้อมูลผู้ใช้<br>
+          สร้าง Token ที่ github.com/settings/tokens (scope: gist)
+        </p>
         <div class="form-group">
-          <label class="form-label">GitHub Token</label>
-          <input type="password" class="form-input" id="gist-token" placeholder="ghp_xxxxxxxxxxxx">
+          <label class="form-label">GitHub Token (User Gist)</label>
+          <input type="password" class="form-input" id="user-gist-token" placeholder="ghp_xxxxxxxxxxxx">
         </div>
         <div class="form-group">
-          <label class="form-label">Gist ID (ปล่อยว่างถ้าต้องการสร้างใหม่)</label>
-          <input type="text" class="form-input" id="gist-id" placeholder="กรอกหลังสร้าง Gist แล้ว">
+          <label class="form-label">Gist ID (ถ้ามีอยู่แล้ว)</label>
+          <input type="text" class="form-input" id="user-gist-id-input" placeholder="ปล่อยว่างถ้าต้องการสร้างใหม่">
         </div>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-primary" onclick="saveGistConfig()">💾 บันทึก Token</button>
-          <button class="btn" onclick="testGistConnection()">🔗 ทดสอบ</button>
-          <button class="btn" onclick="createNewGist()">✨ สร้าง Gist ใหม่</button>
-        </div>
-        <div id="gist-status" style="margin-top:10px;font-size:12px;color:var(--text3)"></div>
-      </div>
-
-      <!-- IMPORT PERSON EXCEL -->
-      <div class="setup-step">
-        <div class="setup-step-num">2</div>
-        <h3>นำเข้าข้อมูลบุคลากร (Excel)</h3>
-        <p>ไฟล์ Excel ต้องมีคอลัมน์: <strong>ID, Name, Shift, Level</strong></p>
-        <button class="btn" onclick="document.getElementById('import-person-excel').click()">📥 นำเข้า Person Excel</button>
-        <input type="file" id="import-person-excel" accept=".xlsx,.xls" style="display:none" onchange="importPersonExcel(this)">
-        <div id="person-import-status" style="margin-top:10px;font-size:12px;color:var(--text3)"></div>
-        <div id="person-list-preview" style="margin-top:10px"></div>
-      </div>
-
-      <!-- IMPORT MACHINE EXCEL -->
-      <div class="setup-step">
-        <div class="setup-step-num">3</div>
-        <h3>นำเข้าข้อมูลเครื่องจักร (Excel)</h3>
-        <p>ไฟล์ Excel ต้องมีคอลัมน์: <strong>Tag, Description, Type, Location</strong></p>
-        <button class="btn" onclick="document.getElementById('import-machine-excel2').click()">📥 นำเข้า Machine Excel</button>
-        <input type="file" id="import-machine-excel2" accept=".xlsx,.xls" style="display:none" onchange="importMachineExcel(this)">
-        <div id="machine-import-status" style="margin-top:10px;font-size:12px;color:var(--text3)"></div>
-      </div>
-
-      <!-- SYNC -->
-      <div class="setup-step">
-        <div class="setup-step-num">4</div>
-        <h3>ซิงค์ข้อมูล</h3>
-        <p>ดึงหรืออัพโหลดข้อมูลจาก GitHub Gist เพื่อให้ทุกอุปกรณ์เห็นข้อมูลเดียวกัน</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-primary" onclick="pushToGist()">☁️ Push ขึ้น Gist</button>
-          <button class="btn" onclick="syncFromGist()">⬇️ Pull จาก Gist</button>
+          <button class="btn btn-primary btn-sm" onclick="createUserGist()">✨ สร้าง User Gist ใหม่</button>
+          <button class="btn btn-sm" onclick="saveUserGistConfig()">💾 บันทึก</button>
         </div>
-        <div id="sync-status" style="margin-top:10px;font-size:12px;color:var(--text3)"></div>
+        <div id="user-gist-status" style="font-size:12px;color:var(--text3);margin-top:8px"></div>
       </div>
+      <div id="user-list-container"></div>
     </div>
+  </div>
 
-    <hr class="divider">
-    <div class="card" style="border-color:var(--stop);max-width:400px">
-      <div class="card-title" style="color:var(--stop)">⚠️ Danger Zone</div>
-      <p style="font-size:12px;color:var(--text2);margin-bottom:12px">ล้างข้อมูลทั้งหมดในอุปกรณ์นี้ (ข้อมูลบน Gist ยังอยู่)</p>
+  <div class="settings-section">
+    <div class="settings-section-title">☁️ PM Data Gist (Gist 1)</div>
+    <div class="settings-section-body">
+      <div class="form-group">
+        <label class="form-label">GitHub Token</label>
+        <input type="password" class="form-input" id="gist-token" placeholder="ghp_xxxxxxxxxxxx">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Gist ID</label>
+        <input type="text" class="form-input" id="gist-id" placeholder="ปล่อยว่างถ้าต้องการสร้างใหม่">
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <button class="btn btn-primary btn-sm" onclick="saveGistConfig()">💾 บันทึก</button>
+        <button class="btn btn-sm" onclick="testGistConnection()">🔗 ทดสอบ</button>
+        <button class="btn btn-sm" onclick="createNewGist()">✨ สร้างใหม่</button>
+      </div>
+      <div id="gist-status" style="font-size:12px;color:var(--text3);margin-bottom:12px"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="pushToGist()">☁️ Push ขึ้น Gist</button>
+        <button class="btn btn-sm" onclick="syncFromGist()">⬇️ Pull จาก Gist</button>
+      </div>
+      <div id="sync-status" style="font-size:12px;color:var(--text3);margin-top:8px"></div>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-section-title">🏭 นำเข้าเครื่องจักร (Excel)</div>
+    <div class="settings-section-body">
+      <p style="font-size:12px;color:var(--text2);margin-bottom:12px">คอลัมน์: <strong>Tag, Description, Type, Location</strong></p>
+      <button class="btn btn-sm" onclick="document.getElementById('import-machine-excel2').click()">📥 นำเข้า Excel</button>
+      <input type="file" id="import-machine-excel2" accept=".xlsx,.xls" style="display:none" onchange="importMachineExcel(this)">
+      <div id="machine-import-status" style="margin-top:10px;font-size:12px;color:var(--text3)"></div>
+    </div>
+  </div>
+
+  <div class="settings-section" style="border-color:var(--stop)">
+    <div class="settings-section-title" style="color:var(--stop)">⚠️ Danger Zone</div>
+    <div class="settings-section-body">
+      <p style="font-size:12px;color:var(--text2);margin-bottom:12px">ล้างข้อมูลทั้งหมดในอุปกรณ์นี้</p>
       <button class="btn btn-danger btn-sm" onclick="clearLocalData()">🗑️ ล้างข้อมูล Local</button>
     </div>
   </div>
+</div>
 
 </div><!-- /main -->
 
-<!-- ═══════════ MODALS ═══════════ -->
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav" id="bottom-nav" style="display:none">
+  <div class="bottom-nav-inner">
+    <button class="bottom-nav-item active" onclick="showPage('dashboard')" data-bnav="dashboard"><span class="nav-icon">📊</span>หน้าหลัก</button>
+    <button class="bottom-nav-item" onclick="showPage('machines')" data-bnav="machines"><span class="nav-icon">🏭</span>เครื่องจักร</button>
+    <button class="bottom-nav-item" onclick="showPage('log')" data-bnav="log"><span class="nav-icon">📋</span>บันทึก</button>
+    <button class="bottom-nav-item" onclick="showPage('summary')" data-bnav="summary"><span class="nav-icon">📈</span>สรุปผล</button>
+    <button class="bottom-nav-item" id="bnav-settings" style="display:none" onclick="showPage('settings')" data-bnav="settings"><span class="nav-icon">⚙️</span>ตั้งค่า</button>
+  </div>
+</nav>
+<button class="fab" id="fab-btn" style="display:none" onclick="openPmModal(null)">＋</button>
 
 <!-- PM MODAL -->
 <div class="modal-overlay" id="modal-pm">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title" id="pm-modal-title">บันทึก PM</div>
+      <div class="modal-title">📝 บันทึก PM</div>
       <button class="modal-close" onclick="closeModal('modal-pm')">✕</button>
     </div>
     <div class="modal-body">
-      <!-- Machine select -->
       <div class="form-group">
         <label class="form-label">เครื่องจักร</label>
-        <select class="form-select" id="pm-machine-select" onchange="onPmMachineChange()">
-          <option value="">-- เลือกเครื่องจักร --</option>
-        </select>
+        <select class="form-select" id="pm-machine"><option value="">-- เลือกเครื่องจักร --</option></select>
       </div>
-      <div id="pm-machine-info" style="display:none;margin-bottom:12px">
-        <div style="background:var(--bg4);border-radius:6px;padding:10px 12px;font-size:12px;color:var(--text2);line-height:1.8">
-          <span id="pm-info-type"></span> · <span id="pm-info-location"></span>
-        </div>
-      </div>
-
-      <!-- Status -->
       <div class="form-group">
-        <label class="form-label">สถานะเครื่องจักร</label>
+        <label class="form-label">สถานะ</label>
         <div class="status-radio-group">
-          <div>
-            <input type="radio" name="pm-status" id="pm-good" value="good" class="status-radio" checked>
-            <label for="pm-good" class="status-radio-label good"><span class="icon">✅</span>Good</label>
-          </div>
-          <div>
-            <input type="radio" name="pm-status" id="pm-warn" value="warning" class="status-radio">
-            <label for="pm-warn" class="status-radio-label warn"><span class="icon">⚠️</span>Warning</label>
-          </div>
-          <div>
-            <input type="radio" name="pm-status" id="pm-stop" value="stopped" class="status-radio">
-            <label for="pm-stop" class="status-radio-label stop"><span class="icon">🛑</span>Under Repair</label>
-          </div>
+          <div><input type="radio" name="pm-status" id="pm-good" value="good" class="status-radio" checked><label for="pm-good" class="status-radio-label good"><span class="icon">✅</span>Good</label></div>
+          <div><input type="radio" name="pm-status" id="pm-warn" value="warning" class="status-radio"><label for="pm-warn" class="status-radio-label warn"><span class="icon">⚠️</span>Warning</label></div>
+          <div><input type="radio" name="pm-status" id="pm-stop" value="stopped" class="status-radio"><label for="pm-stop" class="status-radio-label stop"><span class="icon">🛑</span>Under Repair</label></div>
         </div>
       </div>
-
-      <!-- Inspector -->
-      <div class="form-group">
-        <label class="form-label">ผู้ตรวจ</label>
-        <select class="form-select" id="pm-inspector">
-          <option value="">-- เลือกผู้ตรวจ --</option>
-        </select>
-      </div>
-
-      <!-- Remark -->
       <div class="form-group">
         <label class="form-label">หมายเหตุ / อาการ</label>
         <textarea class="form-textarea" id="pm-remark" placeholder="ระบุอาการ, งานที่ทำ, ข้อสังเกต..."></textarea>
       </div>
-
-      <!-- Camera -->
       <div class="form-group">
-        <label class="form-label">ถ่ายรูป (บันทึกใน Gist อัตโนมัติ)</label>
+        <label class="form-label">ถ่ายรูป</label>
         <div class="camera-area">
           <video id="camera-preview" autoplay playsinline muted></video>
           <div class="camera-controls">
@@ -1173,1694 +571,607 @@
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-pm')">ยกเลิก</button>
-      <button class="btn btn-primary" onclick="savePmRecord()">💾 บันทึก PM</button>
+      <button class="btn btn-primary" onclick="savePmRecord()">💾 บันทึก</button>
     </div>
   </div>
 </div>
 
-<!-- PERSON MODAL -->
-<div class="modal-overlay" id="modal-person">
-  <div class="modal" style="max-width:420px">
-    <div class="modal-header">
-      <div class="modal-title">👤 เลือกผู้ตรวจ</div>
-      <button class="modal-close" onclick="closeModal('modal-person')">✕</button>
-    </div>
-    <div class="modal-body">
-      <input type="text" class="form-input" id="person-search" placeholder="🔍 ค้นหาชื่อ..." oninput="renderPersonList()" style="margin-bottom:12px">
-      <div id="person-list-modal"></div>
-    </div>
-  </div>
-</div>
-
-<!-- PHOTO VIEW MODAL -->
+<!-- PHOTO MODAL -->
 <div class="modal-overlay" id="modal-photo">
   <div class="modal" style="max-width:480px">
-    <div class="modal-header">
-      <div class="modal-title">🖼️ รูปภาพ</div>
-      <button class="modal-close" onclick="closeModal('modal-photo')">✕</button>
-    </div>
+    <div class="modal-header"><div class="modal-title">🖼️ รูปภาพ</div><button class="modal-close" onclick="closeModal('modal-photo')">✕</button></div>
     <div class="modal-body" id="photo-view-body"></div>
   </div>
 </div>
 
-<!-- Toast -->
 <div class="toast-container" id="toast-container"></div>
-
-<!-- Hidden canvas for camera -->
 <canvas id="snap-canvas"></canvas>
-
 <script>
-// ═══════════════════════════════════════
-// STATE
-// ═══════════════════════════════════════
-let state = {
-  machines: [],       // [{tag, description, type, location}]
-  persons: [],        // [{id, name, shift, level}]
-  pmLogs: [],         // [{id, machineTag, status, inspector, remark, photos, timestamp}]
-  activePerson: null,
-  gistToken: '',
-  gistId: '',
-  statusFilter: 'all',
-  currentPhotos: [],
-  cameraStream: null,
+const SUPER_ADMIN_PIN = 'PMSYS2025!';
+
+const state = {
+  machines:[], pmLogs:[], users:[],
+  gistToken:'', gistId:'',
+  userGistToken:'', userGistId:'',
+  statusFilter:'all',
+  currentPhotos:[], cameraStream:null,
+  currentUser:null,
 };
 
-// ═══════════════════════════════════════
-// INIT
-// ═══════════════════════════════════════
-function init() {
-  initTheme();
-  loadLocal();
-  updateTopbarDate();
-  renderAll();
-  setInterval(updateTopbarDate, 60000);
-  const now = new Date();
-  document.getElementById('summary-month').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  document.getElementById('log-filter-date').value = now.toISOString().split('T')[0];
-
-  // Boot Firebase — poll until SDK globals are ready (handles slow CDN)
-  waitForFirebaseAndBoot();
-}
-
-function waitForFirebaseAndBoot(attempts) {
-  attempts = attempts || 0;
-  if (typeof firebase !== 'undefined' && firebase.initializeApp) {
-    const cfg = getSavedFirebaseConfig();
-    if (cfg && cfg.apiKey) {
-      initFirebase(cfg);
-    } else {
-      showFirebaseConfig();
-    }
-  } else if (attempts < 20) {
-    setTimeout(() => waitForFirebaseAndBoot(attempts + 1), 200);
-  } else {
-    console.error('Firebase SDK failed to load after 4s');
-    showFirebaseConfig();
-  }
-}
-
-function loadLocal() {
-  try {
-    const s = localStorage.getItem('pm_state');
-    if (s) {
-      const loaded = JSON.parse(s);
-      state.machines = loaded.machines || [];
-      state.persons = loaded.persons || [];
-      state.pmLogs = loaded.pmLogs || [];
-      state.activePerson = loaded.activePerson || null;
-      state.gistToken = loaded.gistToken || '';
-      state.gistId = loaded.gistId || '';
-    }
-  } catch(e) { console.warn('loadLocal failed', e); }
-}
-
 function saveLocal() {
-  localStorage.setItem('pm_state', JSON.stringify({
-    machines: state.machines,
-    persons: state.persons,
-    pmLogs: state.pmLogs,
-    activePerson: state.activePerson,
-    gistToken: state.gistToken,
-    gistId: state.gistId,
+  localStorage.setItem('pmsys_v3', JSON.stringify({
+    machines:state.machines, pmLogs:state.pmLogs,
+    gistToken:state.gistToken, gistId:state.gistId,
+    userGistToken:state.userGistToken, userGistId:state.userGistId,
   }));
 }
+function loadLocal() {
+  try {
+    const s = localStorage.getItem('pmsys_v3');
+    if (!s) return;
+    const d = JSON.parse(s);
+    state.machines = d.machines||[];
+    state.pmLogs = d.pmLogs||[];
+    state.gistToken = d.gistToken||'';
+    state.gistId = d.gistId||'';
+    state.userGistToken = d.userGistToken||'';
+    state.userGistId = d.userGistId||'';
+  } catch(e) { console.warn(e); }
+}
 
+function init() {
+  loadLocal();
+  updateTopbarDate();
+  setInterval(updateTopbarDate, 60000);
+  const now = new Date();
+  document.getElementById('summary-month').value =
+    now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  document.getElementById('log-filter-date').value = now.toISOString().split('T')[0];
+  document.querySelectorAll('.modal-overlay').forEach(o => {
+    o.addEventListener('click', e => { if(e.target===o) closeModal(o.id); });
+  });
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+  showAuthScreen();
+}
 function updateTopbarDate() {
-  const d = new Date();
-  document.getElementById('topbar-date').textContent = d.toLocaleDateString('th-TH', {
-    weekday:'short', year:'numeric', month:'short', day:'numeric',
-    hour:'2-digit', minute:'2-digit'
-  });
+  const el = document.getElementById('topbar-date');
+  if (el) el.textContent = new Date().toLocaleDateString('th-TH',
+    {weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
 }
 
-// ═══════════════════════════════════════
-// NAV
-// ═══════════════════════════════════════
+// ── AUTH ──
+function hashPassword(pw) {
+  let h = 5381;
+  for (let i=0; i<pw.length; i++) h = (h*33)^pw.charCodeAt(i);
+  return 'ph_'+(h>>>0).toString(16)+'_'+pw.length;
+}
+function showAuthScreen() {
+  document.getElementById('auth-screen').classList.remove('hidden');
+  document.getElementById('desktop-nav').style.display = 'none';
+  document.getElementById('bottom-nav').style.display = 'none';
+  document.getElementById('fab-btn').style.display = 'none';
+  document.getElementById('topbar-user-info').style.display = 'none';
+  document.getElementById('btn-settings-nav').style.display = 'none';
+}
+function hideAuthScreen() {
+  document.getElementById('auth-screen').classList.add('hidden');
+  const u = state.currentUser;
+  const isAdmin = u.role==='admin';
+  document.getElementById('topbar-user-info').style.display = 'flex';
+  document.getElementById('topbar-user-name').textContent = u.name||u.username;
+  const badge = document.getElementById('topbar-role-badge');
+  badge.textContent = isAdmin ? 'Admin' : 'User';
+  badge.className = 'topbar-role-badge '+u.role;
+  document.getElementById('btn-settings-nav').style.display = isAdmin ? 'flex' : 'none';
+  document.getElementById('desktop-nav').style.display = '';
+  document.getElementById('bottom-nav').style.display = '';
+  document.getElementById('fab-btn').style.display = '';
+  document.getElementById('nav-settings').style.display = isAdmin ? '' : 'none';
+  document.getElementById('bnav-settings').style.display = isAdmin ? '' : 'none';
+}
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.auth-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById('panel-'+tab).classList.add('active');
+}
+async function doLogin() {
+  const username = document.getElementById('login-username').value.trim().toLowerCase();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-error');
+  errEl.classList.remove('show');
+  if (!username||!password) { errEl.textContent='กรุณาใส่ username และ password'; errEl.classList.add('show'); return; }
+  if (username==='superadmin' && password===SUPER_ADMIN_PIN) {
+    state.currentUser = {username:'superadmin',name:'Super Admin',role:'admin',shift:'-'};
+    hideAuthScreen(); renderAll(); showPage('settings');
+    toast('เข้าสู่ระบบ Super Admin 🔑','success'); return;
+  }
+  if (!state.userGistToken||!state.userGistId) {
+    errEl.textContent='ยังไม่ได้ตั้งค่า User Gist — ใช้ superadmin / PMSYS2025! เพื่อตั้งค่าก่อน';
+    errEl.classList.add('show'); return;
+  }
+  const btn = document.getElementById('btn-login');
+  btn.disabled=true; btn.textContent='⏳ กำลังตรวจสอบ...';
+  try {
+    await loadUsersFromGist();
+    const user = state.users.find(u=>u.username.toLowerCase()===username);
+    if (!user) { errEl.textContent='❌ ไม่พบ username นี้'; errEl.classList.add('show'); }
+    else if (!user.approved) { errEl.textContent='⏳ รออนุมัติจาก Admin'; errEl.classList.add('show'); }
+    else if (user.passwordHash!==hashPassword(password)) { errEl.textContent='❌ Password ไม่ถูกต้อง'; errEl.classList.add('show'); }
+    else {
+      state.currentUser = {username:user.username,name:user.name,role:user.role,shift:user.shift};
+      hideAuthScreen(); renderAll(); showPage('dashboard');
+      toast('ยินดีต้อนรับ '+user.name+' 👋','success');
+    }
+  } catch(e) { errEl.textContent='❌ เชื่อมต่อ Gist ไม่ได้: '+e.message; errEl.classList.add('show'); }
+  finally { btn.disabled=false; btn.textContent='เข้าสู่ระบบ'; }
+}
+async function doRegister() {
+  const name=document.getElementById('reg-name').value.trim();
+  const username=document.getElementById('reg-username').value.trim().toLowerCase();
+  const password=document.getElementById('reg-password').value;
+  const shift=document.getElementById('reg-shift').value;
+  const errEl=document.getElementById('reg-error');
+  const okEl=document.getElementById('reg-success');
+  errEl.classList.remove('show'); okEl.classList.remove('show');
+  if (!name||!username||!password) { errEl.textContent='กรุณากรอกข้อมูลให้ครบ'; errEl.classList.add('show'); return; }
+  if (password.length<4) { errEl.textContent='Password ต้องมีอย่างน้อย 4 ตัว'; errEl.classList.add('show'); return; }
+  if (!/^[a-z0-9_]+$/.test(username)) { errEl.textContent='Username ใช้ได้เฉพาะ a-z, 0-9, _'; errEl.classList.add('show'); return; }
+  if (!state.userGistToken||!state.userGistId) { errEl.textContent='ระบบยังไม่พร้อม — Admin ต้องตั้งค่า User Gist ก่อน'; errEl.classList.add('show'); return; }
+  const btn=document.getElementById('btn-register');
+  btn.disabled=true; btn.textContent='⏳ กำลังสมัคร...';
+  try {
+    await loadUsersFromGist();
+    if (state.users.find(u=>u.username===username)) { errEl.textContent='❌ Username นี้ถูกใช้แล้ว'; errEl.classList.add('show'); }
+    else {
+      const isFirst = state.users.length===0;
+      state.users.push({username,name,passwordHash:hashPassword(password),
+        role:isFirst?'admin':'user',shift,approved:isFirst,createdAt:new Date().toISOString()});
+      await saveUsersToGist();
+      okEl.textContent = isFirst
+        ? '✅ สมัครสำเร็จ! คุณเป็น Admin คนแรก — เข้าสู่ระบบได้เลย'
+        : '✅ สมัครสำเร็จ! รออนุมัติจาก Admin ก่อนเข้าใช้งาน';
+      okEl.classList.add('show');
+      if (isFirst) setTimeout(()=>switchAuthTab('login'),2000);
+    }
+  } catch(e) { errEl.textContent='❌ '+e.message; errEl.classList.add('show'); }
+  finally { btn.disabled=false; btn.textContent='สมัครใช้งาน'; }
+}
+function confirmLogout() {
+  if (!confirm('ออกจากระบบ?')) return;
+  state.currentUser=null; showAuthScreen();
+  document.getElementById('login-username').value='';
+  document.getElementById('login-password').value='';
+  document.getElementById('login-error').classList.remove('show');
+}
+
+// ── USER GIST ──
+async function loadUsersFromGist() {
+  const r = await fetch('https://api.github.com/gists/'+state.userGistId,
+    {headers:{Authorization:'token '+state.userGistToken}});
+  if (!r.ok) throw new Error('HTTP '+r.status);
+  const g = await r.json();
+  const raw = g.files['users.json']?.content;
+  if (raw) state.users = JSON.parse(raw);
+}
+async function saveUsersToGist() {
+  const r = await fetch('https://api.github.com/gists/'+state.userGistId, {
+    method:'PATCH',
+    headers:{Authorization:'token '+state.userGistToken,'Content-Type':'application/json'},
+    body:JSON.stringify({files:{'users.json':{content:JSON.stringify(state.users,null,2)}}})
+  });
+  if (!r.ok) throw new Error('HTTP '+r.status);
+}
+async function createUserGist() {
+  const token = document.getElementById('user-gist-token').value.trim();
+  if (!token) { toast('กรุณาใส่ Token ก่อน','error'); return; }
+  const statusEl = document.getElementById('user-gist-status');
+  statusEl.textContent='⏳ กำลังสร้าง...';
+  try {
+    const r = await fetch('https://api.github.com/gists',{method:'POST',
+      headers:{Authorization:'token '+token,'Content-Type':'application/json'},
+      body:JSON.stringify({description:'PM System — User Database',public:false,
+        files:{'users.json':{content:'[]'}}})});
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    const g = await r.json();
+    state.userGistToken=token; state.userGistId=g.id;
+    saveLocal(); renderUserManagement();
+    statusEl.textContent='✅ สร้างแล้ว: '+g.id;
+    toast('สร้าง User Gist สำเร็จ ✅','success');
+  } catch(e) { statusEl.textContent='❌ '+e.message; }
+}
+function saveUserGistConfig() {
+  state.userGistToken=document.getElementById('user-gist-token').value.trim();
+  state.userGistId=document.getElementById('user-gist-id-input').value.trim();
+  saveLocal(); renderUserManagement(); toast('บันทึกแล้ว','success');
+}
+async function renderUserManagement() {
+  const container=document.getElementById('user-list-container');
+  const setupBox=document.getElementById('user-gist-setup-box');
+  if (!container) return;
+  if (!state.userGistToken||!state.userGistId) {
+    setupBox.style.display='block';
+    document.getElementById('user-gist-token').value=state.userGistToken||'';
+    document.getElementById('user-gist-id-input').value=state.userGistId||'';
+    container.innerHTML=''; return;
+  }
+  setupBox.style.display='none';
+  container.innerHTML='<div style="color:var(--text3);font-size:13px;padding:10px">⏳ กำลังโหลด...</div>';
+  try {
+    await loadUsersFromGist();
+    if (!state.users.length) {
+      container.innerHTML='<div style="color:var(--text3);font-size:13px;text-align:center;padding:20px">ยังไม่มีผู้ใช้งาน</div>';
+      return;
+    }
+    container.innerHTML='<div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-top:8px">'+
+      state.users.map((u,i)=>'<div class="user-row" style="'+(u.approved?'':'border-left:3px solid var(--warn)')+'">'+
+        '<div class="user-row-info"><div class="user-row-name">'+escHtml(u.name)+
+        ' <span style="font-size:11px;color:var(--text3)">('+escHtml(u.username)+')</span></div>'+
+        '<div class="user-row-meta">Shift '+(u.shift||'-')+' · '+
+        (u.role==='admin'?'🔑 Admin':'👤 User')+' · '+
+        (u.approved?'✅ อนุมัติแล้ว':'⏳ รออนุมัติ')+'</div></div>'+
+        '<div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap">'+
+        (!u.approved?'<button class="btn btn-sm btn-success" onclick="approveUser('+i+')">✅ อนุมัติ</button>':'')+
+        (u.role==='user'?'<button class="btn btn-sm" onclick="setUserRole('+i+',\'admin\')" title="เลื่อนเป็น Admin">↑</button>':
+          u.username!=='superadmin'?'<button class="btn btn-sm" onclick="setUserRole('+i+',\'user\')" title="ลด Role">↓</button>':'')+
+        (u.username!==state.currentUser?.username?'<button class="btn btn-sm btn-danger" onclick="deleteUser('+i+')">🗑️</button>':'')+
+        '</div></div>').join('')+'</div>';
+  } catch(e) { container.innerHTML='<div style="color:var(--stop);font-size:13px;padding:10px">❌ '+e.message+'</div>'; }
+}
+async function approveUser(i) { state.users[i].approved=true; await saveUsersToGist(); toast('อนุมัติแล้ว ✅','success'); renderUserManagement(); }
+async function setUserRole(i,role) { state.users[i].role=role; await saveUsersToGist(); toast('เปลี่ยน Role แล้ว','success'); renderUserManagement(); }
+async function deleteUser(i) {
+  if (!confirm('ลบผู้ใช้ "'+state.users[i].name+'"?')) return;
+  state.users.splice(i,1); await saveUsersToGist(); toast('ลบแล้ว','success'); renderUserManagement();
+}
+
+// ── NAV ──
 function showPage(name) {
-  if (name === 'settings' && currentUserRole !== 'admin') {
-    toast('เฉพาะ Admin เท่านั้น', 'error');
-    return;
-  }
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.bottom-nav-item').forEach(t => t.classList.remove('active'));
-  const bottomBtn = document.querySelector(`.bottom-nav-item[data-page="${name}"]`);
-  if (bottomBtn) bottomBtn.classList.add('active');
-  document.querySelector(`.nav-tab[data-page="${name}"]`)?.classList.add('active');
-  const pageEl = document.getElementById('page-'+name);
-  if (pageEl) pageEl.classList.add('active');
-
-  if (name === 'dashboard') renderDashboard();
-  if (name === 'machines') renderMachines();
-  if (name === 'log') renderLog();
-  if (name === 'summary') renderSummary();
-  if (name === 'settings') {
-    document.getElementById('gist-token').value = state.gistToken;
-    document.getElementById('gist-id').value = state.gistId;
-    renderPersonPreview();
-  }
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.bottom-nav-item').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelector('[data-page="'+name+'"]')?.classList.add('active');
+  document.querySelector('[data-bnav="'+name+'"]')?.classList.add('active');
+  if (name==='dashboard') renderDashboard();
+  if (name==='machines') renderMachines();
+  if (name==='log') renderLog();
+  if (name==='summary') renderSummary();
+  if (name==='settings') { document.getElementById('gist-token').value=state.gistToken; document.getElementById('gist-id').value=state.gistId; renderUserManagement(); }
 }
-
-// ═══════════════════════════════════════
-// RENDER ALL
-// ═══════════════════════════════════════
-function renderAll() {
-  updateBadges();
-  renderDashboard();
-  renderActivePerson();
-  populateMachineSelect();
-  populatePersonSelect();
-  populateFilterDropdowns();
-}
-
+function renderAll() { updateBadges(); renderDashboard(); populateFilterDropdowns(); }
 function updateBadges() {
-  document.getElementById('badge-machines').textContent = state.machines.length;
-  document.getElementById('badge-log').textContent = state.pmLogs.length;
+  document.getElementById('badge-machines').textContent=state.machines.length;
+  document.getElementById('badge-log').textContent=state.pmLogs.length;
 }
 
-// ═══════════════════════════════════════
-// DASHBOARD
-// ═══════════════════════════════════════
+// ── DASHBOARD ──
 function renderDashboard() {
-  const latestStatus = getLatestStatusMap();
-  const counts = {good:0, warning:0, stopped:0};
-  state.machines.forEach(m => {
-    const s = latestStatus[m.tag] || 'good';
-    counts[s]++;
-  });
-
-  const today = new Date().toISOString().split('T')[0];
-  const todayLogs = state.pmLogs.filter(l => l.timestamp.startsWith(today));
-
-  document.getElementById('stat-total').textContent = state.machines.length;
-  document.getElementById('stat-good').textContent = counts.good;
-  document.getElementById('stat-warn').textContent = counts.warning;
-  document.getElementById('stat-stop').textContent = counts.stopped;
-  document.getElementById('stat-logs').textContent = todayLogs.length;
-  const greetingName = document.getElementById('greeting-name');
-  if (greetingName && currentUser) greetingName.textContent = currentUser.displayName?.split(' ')[0] || 'ยินดีต้อนรับ';
-  document.getElementById('dash-subtitle').textContent = `อัพเดต ${new Date().toLocaleTimeString('th-TH')} · บันทึกวันนี้ ${todayLogs.length} รายการ`;
-
-  // Alert area
-  const alertArea = document.getElementById('alert-area');
-  alertArea.innerHTML = '';
-  if (counts.stopped > 0) {
-    alertArea.innerHTML += `<div class="alert alert-danger">🛑 มีเครื่องจักร <strong>${counts.stopped}</strong> เครื่องที่อยู่ระหว่างซ่อม (Under Repair)</div>`;
-  }
-  if (counts.warning > 0) {
-    alertArea.innerHTML += `<div class="alert alert-warn">⚠️ มีเครื่องจักร <strong>${counts.warning}</strong> เครื่องที่มีสถานะ Warning</div>`;
-  }
-  if (!state.gistToken) {
-    alertArea.innerHTML += `<div class="alert alert-info">💡 ยังไม่ได้ตั้งค่า GitHub Gist Token — ข้อมูลจะถูกบันทึกเฉพาะในอุปกรณ์นี้</div>`;
-  }
-
-  // Warn+Stop cards
-  const warnGrid = document.getElementById('dashboard-warn-list');
-  const warnMachines = state.machines.filter(m => {
-    const s = latestStatus[m.tag];
-    return s === 'warning' || s === 'stopped';
-  });
-  if (warnMachines.length === 0) {
-    warnGrid.innerHTML = `<div style="color:var(--text3);font-size:13px;padding:20px 0">✅ ไม่มีเครื่องจักรที่ต้องระวัง</div>`;
-  } else {
-    warnGrid.innerHTML = warnMachines.map(m => machineCardHTML(m, latestStatus[m.tag])).join('');
-  }
+  const lsm=getLatestStatusMap();
+  const c={good:0,warning:0,stopped:0};
+  state.machines.forEach(m=>{const s=lsm[m.tag]||'good';if(c[s]!==undefined)c[s]++;});
+  document.getElementById('stat-total').textContent=state.machines.length;
+  document.getElementById('stat-good').textContent=c.good;
+  document.getElementById('stat-warn').textContent=c.warning;
+  document.getElementById('stat-stop').textContent=c.stopped;
+  document.getElementById('dash-subtitle').textContent='อัพเดต '+new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})+' น.';
+  const warnList=state.machines.filter(m=>['warning','stopped'].includes(lsm[m.tag]));
+  document.getElementById('dashboard-warn-list').innerHTML=warnList.length
+    ?warnList.map(m=>machineCardHTML(m,lsm[m.tag])).join('')
+    :'<div style="color:var(--text3);font-size:13px;padding:10px;text-align:center">✅ ทุกเครื่องปกติ</div>';
+  const recent=[...state.pmLogs].sort((a,b)=>b.timestamp.localeCompare(a.timestamp)).slice(0,5);
+  document.getElementById('dashboard-recent').innerHTML=recent.length
+    ?recent.map(l=>{
+      const t=new Date(l.timestamp).toLocaleString('th-TH',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">'+
+        '<div><span class="machine-tag">'+escHtml(l.machineTag)+'</span> <span style="font-size:12px;color:var(--text2);margin-left:6px">'+escHtml(l.inspector||'—')+'</span></div>'+
+        '<div style="display:flex;align-items:center;gap:8px"><span class="status-badge '+l.status+'">'+statusLabel(l.status)+'</span>'+
+        '<span style="font-size:11px;color:var(--text3);font-family:var(--mono)">'+t+'</span></div></div>';
+    }).join('')
+    :'<div style="color:var(--text3);font-size:13px;padding:16px;text-align:center">ยังไม่มีบันทึก</div>';
 }
-
 function getLatestStatusMap() {
-  const map = {};
-  const sorted = [...state.pmLogs].sort((a,b) => a.timestamp > b.timestamp ? 1 : -1);
-  sorted.forEach(l => { map[l.machineTag] = l.status; });
+  const map={};
+  [...state.pmLogs].sort((a,b)=>a.timestamp.localeCompare(b.timestamp)).forEach(l=>{map[l.machineTag]=l.status;});
   return map;
 }
-
-// ═══════════════════════════════════════
-// MACHINES
-// ═══════════════════════════════════════
-function machineCardHTML(m, status) {
-  status = status || 'good';
-  const statusLabel = {good:'Good', warning:'Warning', stopped:'Under Repair'}[status] || status;
-  const lastLog = [...state.pmLogs]
-    .filter(l => l.machineTag === m.tag)
-    .sort((a,b) => b.timestamp.localeCompare(a.timestamp))[0];
-  const timeStr = lastLog ? new Date(lastLog.timestamp).toLocaleString('th-TH',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : 'ยังไม่เคยตรวจ';
-
-  return `
-  <div class="machine-card ${status}" onclick="openPmModal('${m.tag}')">
-    <div class="machine-card-color-strip"></div>
-    <div class="machine-card-header">
-      <div>
-        <div class="machine-name">${escHtml(m.description||m.tag)}</div>
-        <div class="machine-tag">${escHtml(m.tag)}</div>
-      </div>
-      <span class="status-badge ${status}">${statusLabel}</span>
-    </div>
-    <div class="machine-body">
-      <div class="machine-meta">
-        <div class="machine-meta-row">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a2.5 2.5 0 0 1 2.5 2.5V4h-5v-.5A2.5 2.5 0 0 1 8 1zm3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10h14V4zM2 5h12v8H2z"/></svg>
-          ${escHtml(m.type||'—')}
-        </div>
-        <div class="machine-meta-row">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10zm0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>
-          ${escHtml(m.location||'—')}
-        </div>
-      </div>
-    </div>
-    <div class="machine-footer">
-      <span class="machine-footer-time">ตรวจล่าสุด: ${timeStr}</span>
-      <button class="btn btn-sm btn-primary" onclick="event.stopPropagation();openPmModal('${m.tag}')">+ PM</button>
-    </div>
-  </div>`;
+function machineCardHTML(m,status) {
+  const s=status||'good';
+  const last=[...state.pmLogs].filter(l=>l.machineTag===m.tag).sort((a,b)=>b.timestamp.localeCompare(a.timestamp))[0];
+  const timeStr=last?new Date(last.timestamp).toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'2-digit'}):'ยังไม่ตรวจ';
+  return '<div class="machine-card '+s+'" onclick="openPmModal(\''+m.tag+'\')">'+
+    '<div class="machine-card-header"><div><div class="machine-name">'+escHtml(m.description||m.tag)+'</div>'+
+    '<span class="machine-tag">'+escHtml(m.tag)+'</span></div>'+
+    '<span class="status-badge '+s+'">'+statusLabel(s)+'</span></div>'+
+    '<div class="machine-body"><div class="machine-meta">'+
+    (m.type?'<div class="machine-meta-row">🔧 '+escHtml(m.type)+'</div>':'')+
+    (m.location?'<div class="machine-meta-row">📍 '+escHtml(m.location)+'</div>':'')+
+    '</div></div>'+
+    '<div class="machine-footer"><span class="machine-footer-time">ตรวจล่าสุด: '+timeStr+'</span>'+
+    '<button class="btn btn-sm btn-primary" onclick="event.stopPropagation();openPmModal(\''+m.tag+'\')">+ PM</button></div></div>';
 }
 
+// ── MACHINES ──
 function renderMachines() {
-  const search = document.getElementById('search-machine').value.toLowerCase();
-  const typeF = document.getElementById('filter-type').value;
-  const locF = document.getElementById('filter-location').value;
-  const latestStatus = getLatestStatusMap();
-
-  let filtered = state.machines.filter(m => {
-    const matchSearch = !search || m.tag.toLowerCase().includes(search) || (m.description||'').toLowerCase().includes(search) || (m.location||'').toLowerCase().includes(search);
-    const matchType = !typeF || m.type === typeF;
-    const matchLoc = !locF || m.location === locF;
-    const s = latestStatus[m.tag] || 'good';
-    const matchStatus = state.statusFilter === 'all' || s === state.statusFilter;
-    return matchSearch && matchType && matchLoc && matchStatus;
+  const search=document.getElementById('search-machine').value.toLowerCase();
+  const typeF=document.getElementById('filter-type').value;
+  const locF=document.getElementById('filter-location').value;
+  const lsm=getLatestStatusMap();
+  const filtered=state.machines.filter(m=>{
+    const ms=!search||m.tag.toLowerCase().includes(search)||(m.description||'').toLowerCase().includes(search)||(m.location||'').toLowerCase().includes(search);
+    return ms&&(!typeF||m.type===typeF)&&(!locF||m.location===locF)&&(state.statusFilter==='all'||(lsm[m.tag]||'good')===state.statusFilter);
   });
-
-  document.getElementById('machine-count-sub').textContent = `${filtered.length} / ${state.machines.length} เครื่อง`;
-
-  const grid = document.getElementById('machine-grid');
-  if (filtered.length === 0) {
-    grid.innerHTML = `<div class="no-data"><div class="icon">🔍</div><div>ไม่พบเครื่องจักร</div></div>`;
-    return;
-  }
-  grid.innerHTML = filtered.map(m => machineCardHTML(m, latestStatus[m.tag])).join('');
+  document.getElementById('machine-count-sub').textContent=filtered.length+' / '+state.machines.length+' เครื่อง';
+  document.getElementById('machine-grid').innerHTML=filtered.length
+    ?filtered.map(m=>machineCardHTML(m,lsm[m.tag])).join('')
+    :'<div class="no-data"><div class="icon">🔍</div><div>ไม่พบเครื่องจักร</div></div>';
 }
-
-function toggleStatusFilter(val, el) {
-  state.statusFilter = val;
-  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-  el.classList.add('active');
-  renderMachines();
+function toggleStatusFilter(val,el) {
+  state.statusFilter=val;
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active'); renderMachines();
 }
-
 function populateFilterDropdowns() {
-  const types = [...new Set(state.machines.map(m => m.type).filter(Boolean))];
-  const locs = [...new Set(state.machines.map(m => m.location).filter(Boolean))];
-  const typeSelect = document.getElementById('filter-type');
-  const locSelect = document.getElementById('filter-location');
-  typeSelect.innerHTML = '<option value="">ทุก Type</option>' + types.map(t => `<option>${escHtml(t)}</option>`).join('');
-  locSelect.innerHTML = '<option value="">ทุก Location</option>' + locs.map(l => `<option>${escHtml(l)}</option>`).join('');
+  const types=[...new Set(state.machines.map(m=>m.type).filter(Boolean))];
+  const locs=[...new Set(state.machines.map(m=>m.location).filter(Boolean))];
+  document.getElementById('filter-type').innerHTML='<option value="">ทุก Type</option>'+types.map(t=>'<option>'+escHtml(t)+'</option>').join('');
+  document.getElementById('filter-location').innerHTML='<option value="">ทุก Location</option>'+locs.map(l=>'<option>'+escHtml(l)+'</option>').join('');
 }
 
-// ═══════════════════════════════════════
-// LOG
-// ═══════════════════════════════════════
+// ── LOG ──
 function renderLog() {
-  const dateF = document.getElementById('log-filter-date').value;
-  const statusF = document.getElementById('log-filter-status').value;
-
-  let logs = [...state.pmLogs].sort((a,b) => b.timestamp.localeCompare(a.timestamp));
-  if (dateF) logs = logs.filter(l => l.timestamp.startsWith(dateF));
-  if (statusF) logs = logs.filter(l => l.status === statusF);
-
-  const tbody = document.getElementById('log-tbody');
-  if (logs.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8" class="no-data"><div class="icon">📋</div><div>ไม่พบบันทึก</div></td></tr>`;
-    return;
-  }
-
-  const rowClass = {good:'row-good', warning:'row-warn', stopped:'row-stop'};
-  tbody.innerHTML = logs.map(l => {
-    const m = state.machines.find(m => m.tag === l.machineTag) || {};
-    const t = new Date(l.timestamp).toLocaleString('th-TH',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
-    const photoBtn = l.photos && l.photos.length > 0
-      ? `<button class="btn btn-sm" onclick="viewPhotos('${l.id}')">🖼️ ${l.photos.length}</button>`
-      : '<span style="color:var(--text3);font-size:11px">—</span>';
-    return `<tr class="${rowClass[l.status]||''}">
-      <td style="font-family:var(--mono);font-size:11px;white-space:nowrap">${t}</td>
-      <td><span class="machine-tag">${escHtml(l.machineTag)}</span></td>
-      <td>${escHtml(m.description||l.machineTag)}</td>
-      <td><span class="status-badge ${l.status}">${statusLabel(l.status)}</span></td>
-      <td style="font-size:12px">${escHtml(l.inspector||'—')}</td>
-      <td style="font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(l.remark||'—')}</td>
-      <td>${photoBtn}</td>
-      <td><button class="btn btn-danger btn-sm" onclick="deleteLog('${l.id}')">🗑️</button></td>
-    </tr>`;
-  }).join('');
+  const dateF=document.getElementById('log-filter-date').value;
+  const statusF=document.getElementById('log-filter-status').value;
+  let logs=[...state.pmLogs].sort((a,b)=>b.timestamp.localeCompare(a.timestamp));
+  if (dateF) logs=logs.filter(l=>l.timestamp.startsWith(dateF));
+  if (statusF) logs=logs.filter(l=>l.status===statusF);
+  const rowCls={good:'row-good',warning:'row-warn',stopped:'row-stop'};
+  document.getElementById('log-tbody').innerHTML=logs.length
+    ?logs.map(l=>{
+      const m=state.machines.find(m=>m.tag===l.machineTag)||{};
+      const t=new Date(l.timestamp).toLocaleString('th-TH',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+      const photoBtn=l.photos&&l.photos.length?'<button class="btn btn-sm" onclick="viewPhotos(\''+l.id+'\')">🖼️ '+l.photos.length+'</button>':'<span style="color:var(--text3);font-size:11px">—</span>';
+      return '<tr class="'+(rowCls[l.status]||'')+'"><td style="font-family:var(--mono);font-size:11px;white-space:nowrap">'+t+'</td>'+
+        '<td><span class="machine-tag">'+escHtml(l.machineTag)+'</span></td>'+
+        '<td>'+escHtml(m.description||l.machineTag)+'</td>'+
+        '<td><span class="status-badge '+l.status+'">'+statusLabel(l.status)+'</span></td>'+
+        '<td style="font-size:12px">'+escHtml(l.inspector||'—')+'</td>'+
+        '<td style="font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escHtml(l.remark||'—')+'</td>'+
+        '<td>'+photoBtn+'</td>'+
+        '<td><button class="btn btn-danger btn-sm" onclick="deleteLog(\''+l.id+'\')">🗑️</button></td></tr>';
+    }).join('')
+    :'<tr><td colspan="8" class="no-data"><div class="icon">📋</div><div>ไม่พบบันทึก</div></td></tr>';
 }
-
-function statusLabel(s) {
-  return {good:'✅ Good', warning:'⚠️ Warning', stopped:'🛑 Under Repair'}[s] || s;
-}
-
+function statusLabel(s){return{good:'✅ Good',warning:'⚠️ Warning',stopped:'🛑 Under Repair'}[s]||s;}
 function deleteLog(id) {
   if (!confirm('ลบบันทึกนี้?')) return;
-  state.pmLogs = state.pmLogs.filter(l => l.id !== id);
-  saveLocal();
-  renderLog();
-  updateBadges();
-  toast('ลบบันทึกแล้ว', 'warn');
+  state.pmLogs=state.pmLogs.filter(l=>l.id!==id);
+  saveLocal();renderLog();renderDashboard();updateBadges();
 }
-
-function viewPhotos(logId) {
-  const log = state.pmLogs.find(l => l.id === logId);
-  if (!log || !log.photos) return;
-  const body = document.getElementById('photo-view-body');
-  body.innerHTML = log.photos.map(p => `<img src="${p}" style="width:100%;border-radius:6px;margin-bottom:8px">`).join('');
+function viewPhotos(id) {
+  const log=state.pmLogs.find(l=>l.id===id);if(!log)return;
+  document.getElementById('photo-view-body').innerHTML=(log.photos||[]).map(p=>'<img src="'+p+'" style="width:100%;margin-bottom:8px;border-radius:8px">').join('');
   openModal('modal-photo');
 }
 
-// ═══════════════════════════════════════
-// SUMMARY
-// ═══════════════════════════════════════
+// ── SUMMARY ──
 function renderSummary() {
-  const month = document.getElementById('summary-month').value;
-  const logs = month ? state.pmLogs.filter(l => l.timestamp.startsWith(month)) : state.pmLogs;
-
-  // By Type
-  const byType = {};
-  state.machines.forEach(m => {
-    if (!byType[m.type]) byType[m.type] = {good:0,warning:0,stopped:0,total:0};
-  });
-  logs.forEach(l => {
-    const m = state.machines.find(m => m.tag === l.machineTag);
-    const t = m?.type || 'Unknown';
-    if (!byType[t]) byType[t] = {good:0,warning:0,stopped:0,total:0};
-    byType[t][l.status]++;
-    byType[t].total++;
-  });
-
-  const typeEl = document.getElementById('summary-by-type');
-  typeEl.innerHTML = Object.entries(byType).map(([type, c]) => `
-    <div class="chart-bar-row">
-      <div class="chart-bar-label" title="${type}">${type||'—'}</div>
-      <div style="flex:1">
-        <div style="display:flex;height:20px;border-radius:4px;overflow:hidden;gap:1px">
-          ${barPart(c.good, c.total, 'good')}
-          ${barPart(c.warning, c.total, 'warning')}
-          ${barPart(c.stopped, c.total, 'stopped')}
-        </div>
-        <div style="font-size:10px;color:var(--text3);margin-top:2px;font-family:var(--mono)">G:${c.good} W:${c.warning} S:${c.stopped}</div>
-      </div>
-    </div>`).join('') || '<div style="color:var(--text3);font-size:12px">ไม่มีข้อมูล</div>';
-
-  // By Location
-  const byLoc = {};
-  logs.forEach(l => {
-    const m = state.machines.find(m => m.tag === l.machineTag);
-    const loc = m?.location || 'Unknown';
-    if (!byLoc[loc]) byLoc[loc] = {good:0,warning:0,stopped:0,total:0};
-    byLoc[loc][l.status]++;
-    byLoc[loc].total++;
-  });
-  const locEl = document.getElementById('summary-by-location');
-  locEl.innerHTML = Object.entries(byLoc).map(([loc, c]) => `
-    <div class="chart-bar-row">
-      <div class="chart-bar-label" title="${loc}">${loc||'—'}</div>
-      <div style="flex:1">
-        <div style="display:flex;height:20px;border-radius:4px;overflow:hidden;gap:1px">
-          ${barPart(c.good, c.total, 'good')}
-          ${barPart(c.warning, c.total, 'warning')}
-          ${barPart(c.stopped, c.total, 'stopped')}
-        </div>
-        <div style="font-size:10px;color:var(--text3);margin-top:2px;font-family:var(--mono)">G:${c.good} W:${c.warning} S:${c.stopped}</div>
-      </div>
-    </div>`).join('') || '<div style="color:var(--text3);font-size:12px">ไม่มีข้อมูล</div>';
-
-  // Per machine table
-  const latestStatus = getLatestStatusMap();
-  const tbody = document.getElementById('summary-tbody');
-  tbody.innerHTML = state.machines.map(m => {
-    const mLogs = logs.filter(l => l.machineTag === m.tag);
-    const g = mLogs.filter(l => l.status==='good').length;
-    const w = mLogs.filter(l => l.status==='warning').length;
-    const s = mLogs.filter(l => l.status==='stopped').length;
-    const last = [...state.pmLogs].filter(l=>l.machineTag===m.tag).sort((a,b)=>b.timestamp.localeCompare(a.timestamp))[0];
-    const lastTime = last ? new Date(last.timestamp).toLocaleDateString('th-TH') : '—';
-    const ls = latestStatus[m.tag] || '—';
-    return `<tr>
-      <td><span class="machine-tag">${escHtml(m.tag)}</span></td>
-      <td>${escHtml(m.description||'—')}</td>
-      <td style="color:var(--good);font-family:var(--mono);text-align:center">${g}</td>
-      <td style="color:var(--warn);font-family:var(--mono);text-align:center">${w}</td>
-      <td style="color:var(--stop);font-family:var(--mono);text-align:center">${s}</td>
-      <td style="font-size:12px;font-family:var(--mono)">${lastTime}</td>
-      <td>${ls !== '—' ? `<span class="status-badge ${ls}">${statusLabel(ls)}</span>` : '—'}</td>
-    </tr>`;
-  }).join('');
+  const month=document.getElementById('summary-month').value;
+  const logs=month?state.pmLogs.filter(l=>l.timestamp.startsWith(month)):state.pmLogs;
+  const lsm=getLatestStatusMap();
+  const counts={good:0,warning:0,stopped:0};
+  state.machines.forEach(m=>{const s=lsm[m.tag]||'good';if(counts[s]!==undefined)counts[s]++;});
+  const inspMap={};
+  logs.forEach(l=>{inspMap[l.inspector||'ไม่ระบุ']=(inspMap[l.inspector||'ไม่ระบุ']||0)+1;});
+  const machMap={};
+  state.machines.forEach(m=>{machMap[m.tag]={desc:m.description||m.tag,count:0,lastStatus:'—'};});
+  logs.forEach(l=>{if(machMap[l.machineTag]){machMap[l.machineTag].count++;machMap[l.machineTag].lastStatus=l.status;}});
+  document.getElementById('summary-content').innerHTML=
+    '<div class="stats-row" style="margin-bottom:16px">'+
+    '<div class="stat-card"><div class="stat-num" style="color:var(--text)">'+logs.length+'</div><div class="stat-label">บันทึกทั้งหมด</div></div>'+
+    '<div class="stat-card good"><div class="stat-num">'+counts.good+'</div><div class="stat-label">Good</div></div>'+
+    '<div class="stat-card warn"><div class="stat-num">'+counts.warning+'</div><div class="stat-label">Warning</div></div>'+
+    '<div class="stat-card stop"><div class="stat-num">'+counts.stopped+'</div><div class="stat-label">Under Repair</div></div></div>'+
+    '<div class="card" style="margin-bottom:12px"><div class="card-title">👤 สรุปตามผู้ตรวจ</div>'+
+    (Object.entries(inspMap).sort((a,b)=>b[1]-a[1]).map(([name,cnt])=>
+      '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">'+
+      '<span>'+escHtml(name)+'</span><span style="font-family:var(--mono);color:var(--accent2)">'+cnt+' ครั้ง</span></div>').join('')||
+    '<div style="color:var(--text3);font-size:13px">ไม่มีข้อมูล</div>')+'</div>'+
+    '<div class="card"><div class="card-title">🏭 สรุปตามเครื่องจักร</div><div class="table-wrap"><table>'+
+    '<thead><tr><th>Tag</th><th>ชื่อ</th><th>จำนวน</th><th>สถานะล่าสุด</th></tr></thead><tbody>'+
+    state.machines.map(m=>{const d=machMap[m.tag]||{count:0,lastStatus:'—'};
+      return '<tr><td><span class="machine-tag">'+escHtml(m.tag)+'</span></td>'+
+        '<td style="font-size:13px">'+escHtml(d.desc)+'</td>'+
+        '<td style="font-family:var(--mono);text-align:center">'+d.count+'</td>'+
+        '<td>'+(d.lastStatus!=='—'?'<span class="status-badge '+d.lastStatus+'">'+statusLabel(d.lastStatus)+'</span>':'<span style="color:var(--text3)">—</span>')+'</td></tr>';
+    }).join('')+'</tbody></table></div></div>';
 }
 
-function barPart(count, total, status) {
-  if (!total || !count) return '';
-  const pct = Math.round((count/total)*100);
-  const color = {good:'var(--good)', warning:'var(--warn)', stopped:'var(--stop)'}[status];
-  return `<div style="width:${pct}%;background:${color};min-width:4px"></div>`;
-}
-
-// ═══════════════════════════════════════
-// PM MODAL
-// ═══════════════════════════════════════
+// ── PM MODAL ──
 function openPmModal(tag) {
-  state.currentPhotos = [];
-  document.getElementById('photo-thumbs').innerHTML = '';
-  document.getElementById('pm-remark').value = '';
-  document.getElementById('pm-good').checked = true;
-
-  populateMachineSelect();
-  populatePersonSelect();
-
-  if (tag) {
-    document.getElementById('pm-machine-select').value = tag;
-    onPmMachineChange();
-  }
+  state.currentPhotos=[];
+  const sel=document.getElementById('pm-machine');
+  sel.innerHTML='<option value="">-- เลือกเครื่องจักร --</option>'+
+    state.machines.map(m=>'<option value="'+escHtml(m.tag)+'" '+(m.tag===tag?'selected':'')+'>'+escHtml(m.tag)+' — '+escHtml(m.description||'')+'</option>').join('');
+  document.getElementById('pm-good').checked=true;
+  document.getElementById('pm-remark').value='';
+  document.getElementById('photo-thumbs').innerHTML='';
   openModal('modal-pm');
 }
-
-function onPmMachineChange() {
-  const tag = document.getElementById('pm-machine-select').value;
-  const m = state.machines.find(m => m.tag === tag);
-  if (m) {
-    document.getElementById('pm-info-type').textContent = '🔧 ' + (m.type||'—');
-    document.getElementById('pm-info-location').textContent = '📍 ' + (m.location||'—');
-    document.getElementById('pm-machine-info').style.display = 'block';
-  } else {
-    document.getElementById('pm-machine-info').style.display = 'none';
-  }
-}
-
-function populateMachineSelect() {
-  const sel = document.getElementById('pm-machine-select');
-  sel.innerHTML = '<option value="">-- เลือกเครื่องจักร --</option>' +
-    state.machines.map(m => `<option value="${escHtml(m.tag)}">${escHtml(m.tag)} — ${escHtml(m.description||'')}</option>`).join('');
-}
-
-function populatePersonSelect() {
-  const sel = document.getElementById('pm-inspector');
-  sel.innerHTML = '<option value="">-- เลือกผู้ตรวจ --</option>' +
-    state.persons.map(p => `<option value="${escHtml(p.name)}">${escHtml(p.name)} (${escHtml(p.shift||'')} / ${escHtml(p.level||'')})</option>`).join('');
-  if (state.activePerson) sel.value = state.activePerson.name;
-}
-
 async function savePmRecord() {
-  const tag = document.getElementById('pm-machine-select').value;
-  if (!tag) { toast('กรุณาเลือกเครื่องจักร', 'error'); return; }
-
-  const status = document.querySelector('input[name="pm-status"]:checked')?.value || 'good';
-  const inspector = document.getElementById('pm-inspector').value;
-  const remark = document.getElementById('pm-remark').value.trim();
-
-  const record = {
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
-    machineTag: tag,
-    status,
-    inspector,
-    remark,
-    photos: [...state.currentPhotos],
-    timestamp: new Date().toISOString(),
-    userEmail: currentUser?.email || '',
-  };
-
-  state.pmLogs.push(record);
-  saveLocal();
-  updateBadges();
-  stopCamera();
-  closeModal('modal-pm');
-  toast('บันทึก PM แล้ว ✅', 'success');
-
-  addActivityLog(currentUser?.email, 'pm_record', `${tag} → ${status}`);
-
-  // Push to Firestore
-  pushPmLogToFirestore(record);
-
-  // Push photos to Gist if configured
-  if (state.gistToken && state.gistId) {
-    pushToGist(true);
-  }
+  const tag=document.getElementById('pm-machine').value;
+  const status=document.querySelector('input[name="pm-status"]:checked')?.value||'good';
+  const remark=document.getElementById('pm-remark').value.trim();
+  if (!tag) { toast('กรุณาเลือกเครื่องจักร','error'); return; }
+  const record={id:Date.now().toString(36),machineTag:tag,status,
+    inspector:state.currentUser?.name||'—',remark,
+    photos:[...state.currentPhotos],timestamp:new Date().toISOString()};
+  state.pmLogs.push(record); saveLocal(); stopCamera(); closeModal('modal-pm');
+  renderDashboard(); renderMachines(); updateBadges();
+  toast('บันทึก PM แล้ว ✅','success');
+  if (state.gistToken&&state.gistId) pushToGist().catch(()=>{});
 }
 
-// ═══════════════════════════════════════
-// CAMERA
-// ═══════════════════════════════════════
+// ── CAMERA ──
 async function startCamera() {
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
-    state.cameraStream = stream;
-    const video = document.getElementById('camera-preview');
-    video.srcObject = stream;
-    document.getElementById('btn-start-cam').style.display = 'none';
-    document.getElementById('btn-snap').style.display = '';
-    document.getElementById('btn-stop-cam').style.display = '';
-  } catch(e) {
-    toast('ไม่สามารถเปิดกล้องได้: ' + e.message, 'error');
-  }
+    state.cameraStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+    document.getElementById('camera-preview').srcObject=state.cameraStream;
+    document.getElementById('btn-start-cam').style.display='none';
+    document.getElementById('btn-snap').style.display='';
+    document.getElementById('btn-stop-cam').style.display='';
+  } catch(e) { toast('ไม่สามารถเปิดกล้องได้','error'); }
 }
-
 function snapPhoto() {
-  const video = document.getElementById('camera-preview');
-  const canvas = document.getElementById('snap-canvas');
-  canvas.width = video.videoWidth || 640;
-  canvas.height = video.videoHeight || 480;
-  canvas.getContext('2d').drawImage(video, 0, 0);
-  const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-  state.currentPhotos.push(dataUrl);
-  renderPhotoThumbs();
-  toast('ถ่ายรูปแล้ว 📸', 'success');
+  const v=document.getElementById('camera-preview');
+  const c=document.getElementById('snap-canvas');
+  c.width=v.videoWidth; c.height=v.videoHeight;
+  c.getContext('2d').drawImage(v,0,0);
+  state.currentPhotos.push(c.toDataURL('image/jpeg',0.7));
+  renderPhotoThumbs(); toast('ถ่ายรูปแล้ว 📸','success');
 }
-
 function stopCamera() {
-  if (state.cameraStream) {
-    state.cameraStream.getTracks().forEach(t => t.stop());
-    state.cameraStream = null;
-  }
-  const video = document.getElementById('camera-preview');
-  video.srcObject = null;
-  document.getElementById('btn-start-cam').style.display = '';
-  document.getElementById('btn-snap').style.display = 'none';
-  document.getElementById('btn-stop-cam').style.display = 'none';
+  if (state.cameraStream){state.cameraStream.getTracks().forEach(t=>t.stop());state.cameraStream=null;}
+  const v=document.getElementById('camera-preview');if(v)v.srcObject=null;
+  document.getElementById('btn-start-cam').style.display='';
+  document.getElementById('btn-snap').style.display='none';
+  document.getElementById('btn-stop-cam').style.display='none';
 }
-
 function renderPhotoThumbs() {
-  const container = document.getElementById('photo-thumbs');
-  container.innerHTML = state.currentPhotos.map((p, i) => `
-    <div class="photo-thumb">
-      <img src="${p}">
-      <button class="photo-thumb-del" onclick="removePhoto(${i})">✕</button>
-    </div>`).join('');
+  document.getElementById('photo-thumbs').innerHTML=state.currentPhotos.map((p,i)=>
+    '<div class="photo-thumb"><img src="'+p+'"><button class="photo-thumb-del" onclick="removePhoto('+i+')">✕</button></div>').join('');
 }
+function removePhoto(i){state.currentPhotos.splice(i,1);renderPhotoThumbs();}
 
-function removePhoto(i) {
-  state.currentPhotos.splice(i, 1);
-  renderPhotoThumbs();
-}
-
-// ═══════════════════════════════════════
-// PERSON
-// ═══════════════════════════════════════
-function renderActivePerson() {
-  const chip = document.getElementById('active-person-chip');
-  if (!chip) return; // guard: element not in DOM yet
-  if (state.activePerson) {
-    chip.innerHTML = `<div class="person-chip">
-      👤 ${escHtml(state.activePerson.name)}
-      <span class="shift-badge">${escHtml(state.activePerson.shift||'?')}</span>
-    </div>`;
-  } else {
-    chip.innerHTML = '';
-  }
-}
-
-function renderPersonList() {
-  const search = document.getElementById('person-search').value.toLowerCase();
-  const list = document.getElementById('person-list-modal');
-  const filtered = state.persons.filter(p => !search || p.name.toLowerCase().includes(search) || (p.id||'').toLowerCase().includes(search));
-
-  if (filtered.length === 0) {
-    list.innerHTML = `<div class="no-data">ไม่พบบุคลากร — กรุณานำเข้าไฟล์ Excel ที่หน้าตั้งค่า</div>`;
-    return;
-  }
-
-  list.innerHTML = filtered.map(p => `
-    <div onclick="selectPerson('${escHtml(p.id)}')" style="
-      padding:10px 12px;border-radius:8px;cursor:pointer;
-      border:1px solid ${state.activePerson?.id===p.id ? 'var(--accent)' : 'var(--border)'};
-      background:${state.activePerson?.id===p.id ? 'rgba(31,111,235,0.1)' : 'var(--bg)'};
-      margin-bottom:6px;display:flex;align-items:center;gap:10px;
-      transition:all 0.15s
-    ">
-      <div style="width:36px;height:36px;border-radius:50%;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">
-        ${p.level === 'Supervisor' ? '👨‍💼' : p.level === 'Technician' ? '🔧' : '👤'}
-      </div>
-      <div style="flex:1">
-        <div style="font-weight:600;font-size:13px">${escHtml(p.name)}</div>
-        <div style="font-size:11px;color:var(--text3)">${escHtml(p.id)} · ${escHtml(p.shift||'—')} · ${escHtml(p.level||'—')}</div>
-      </div>
-      ${state.activePerson?.id===p.id ? '<span style="color:var(--accent2)">✓</span>' : ''}
-    </div>`).join('');
-}
-
-function selectPerson(id) {
-  state.activePerson = state.persons.find(p => p.id === id) || null;
-  saveLocal();
-  renderActivePerson();
-  renderPersonList();
-  populatePersonSelect();
-  closeModal('modal-person');
-  toast(`เลือกผู้ตรวจ: ${state.activePerson?.name}`, 'success');
-}
-
-function renderPersonPreview() {
-  const el = document.getElementById('person-list-preview');
-  if (state.persons.length === 0) { el.innerHTML = ''; return; }
-  el.innerHTML = `<div style="font-size:11px;color:var(--text3);margin-bottom:6px">บุคลากร ${state.persons.length} คน</div>` +
-    state.persons.slice(0,5).map(p => `
-      <div style="font-size:12px;color:var(--text2);padding:3px 0">
-        ${escHtml(p.name)} <span style="color:var(--text3)">${escHtml(p.shift||'')} · ${escHtml(p.level||'')}</span>
-      </div>`).join('') +
-    (state.persons.length > 5 ? `<div style="font-size:11px;color:var(--text3)">+${state.persons.length-5} คน...</div>` : '');
-  document.getElementById('person-import-status').textContent = `✅ โหลดบุคลากรแล้ว ${state.persons.length} คน`;
-}
-
-// ═══════════════════════════════════════
-// EXCEL IMPORT
-// ═══════════════════════════════════════
+// ── IMPORT EXCEL ──
 function importMachineExcel(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
     try {
-      const wb = XLSX.read(e.target.result, {type:'binary'});
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(ws, {defval:''});
-      if (data.length === 0) { toast('ไม่พบข้อมูลใน Excel', 'error'); return; }
-
-      state.machines = data.map(r => ({
-        tag: String(r.Tag || r.tag || r.TAG || '').trim(),
-        description: String(r.Description || r.description || r.DESCRIPTION || '').trim(),
-        type: String(r.Type || r.type || r.TYPE || '').trim(),
-        location: String(r.Location || r.location || r.LOCATION || '').trim(),
-      })).filter(m => m.tag);
-
-      saveLocal();
-      populateMachineSelect();
-      populateFilterDropdowns();
-      updateBadges();
-      renderMachines();
-      renderDashboard();
-      const statusEl = document.getElementById('machine-import-status');
-      if (statusEl) statusEl.textContent = `✅ นำเข้า ${state.machines.length} เครื่อง`;
-      toast(`นำเข้าเครื่องจักร ${state.machines.length} เครื่อง ✅`, 'success');
-    } catch(err) {
-      toast('อ่านไฟล์ Excel ไม่ได้: ' + err.message, 'error');
-    }
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const data=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+      state.machines=data.map(r=>({
+        tag:String(r.Tag||r.tag||r.TAG||'').trim(),
+        description:String(r.Description||r.description||r.DESCRIPTION||'').trim(),
+        type:String(r.Type||r.type||r.TYPE||'').trim(),
+        location:String(r.Location||r.location||r.LOCATION||'').trim(),
+      })).filter(m=>m.tag);
+      saveLocal();populateFilterDropdowns();renderMachines();updateBadges();
+      toast('นำเข้า '+state.machines.length+' เครื่อง ✅','success');
+      const s=document.getElementById('machine-import-status');
+      if(s)s.textContent='✅ '+state.machines.length+' เครื่อง';
+    } catch(e){toast('อ่านไฟล์ไม่ได้: '+e.message,'error');}
+    input.value='';
   };
-  reader.readAsBinaryString(file);
-  input.value = '';
+  reader.readAsArrayBuffer(file);
 }
 
-function importPersonExcel(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const wb = XLSX.read(e.target.result, {type:'binary'});
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(ws, {defval:''});
-      if (data.length === 0) { toast('ไม่พบข้อมูลใน Excel', 'error'); return; }
-
-      state.persons = data.map(r => ({
-        id: String(r.ID || r.id || '').trim(),
-        name: String(r.Name || r.name || r.NAME || '').trim(),
-        shift: String(r.Shift || r.shift || r.SHIFT || '').trim(),
-        level: String(r.Level || r.level || r.LEVEL || '').trim(),
-      })).filter(p => p.name);
-
-      saveLocal();
-      populatePersonSelect();
-      renderPersonPreview();
-      toast(`นำเข้าบุคลากร ${state.persons.length} คน ✅`, 'success');
-    } catch(err) {
-      toast('อ่านไฟล์ Excel ไม่ได้: ' + err.message, 'error');
-    }
-  };
-  reader.readAsBinaryString(file);
-  input.value = '';
-}
-
-// ═══════════════════════════════════════
-// GITHUB GIST
-// ═══════════════════════════════════════
+// ── PM DATA GIST ──
 function saveGistConfig() {
-  state.gistToken = document.getElementById('gist-token').value.trim();
-  state.gistId = document.getElementById('gist-id').value.trim();
-  saveLocal();
-  toast('บันทึก Token แล้ว', 'success');
+  state.gistToken=document.getElementById('gist-token').value.trim();
+  state.gistId=document.getElementById('gist-id').value.trim();
+  saveLocal();toast('บันทึกแล้ว','success');
 }
-
 async function testGistConnection() {
-  const token = document.getElementById('gist-token').value.trim();
-  if (!token) { toast('กรุณาใส่ Token ก่อน', 'error'); return; }
-  const el = document.getElementById('gist-status');
-  el.textContent = '🔄 กำลังทดสอบ...';
+  const s=document.getElementById('gist-status');
+  if(!state.gistToken||!state.gistId){s.textContent='❌ ยังไม่ได้ตั้งค่า';return;}
+  s.textContent='⏳ กำลังทดสอบ...';
   try {
-    const r = await fetch('https://api.github.com/user', {
-      headers: { Authorization: 'token ' + token }
-    });
-    if (r.ok) {
-      const u = await r.json();
-      el.textContent = `✅ เชื่อมต่อสำเร็จ: @${u.login}`;
-      toast('เชื่อมต่อ GitHub สำเร็จ ✅', 'success');
-    } else {
-      el.textContent = '❌ Token ไม่ถูกต้อง';
-      toast('Token ไม่ถูกต้อง', 'error');
-    }
-  } catch(e) {
-    el.textContent = '❌ ไม่สามารถเชื่อมต่อได้';
-    toast('เชื่อมต่อ GitHub ไม่ได้', 'error');
-  }
+    const r=await fetch('https://api.github.com/gists/'+state.gistId,{headers:{Authorization:'token '+state.gistToken}});
+    s.textContent=r.ok?'✅ เชื่อมต่อสำเร็จ':'❌ HTTP '+r.status;
+  } catch(e){s.textContent='❌ '+e.message;}
 }
-
 async function createNewGist() {
-  const token = document.getElementById('gist-token').value.trim();
-  if (!token) { toast('กรุณาใส่ Token ก่อน', 'error'); return; }
-  const el = document.getElementById('gist-status');
-  el.textContent = '🔄 กำลังสร้าง Gist...';
+  const token=document.getElementById('gist-token').value.trim();
+  if(!token){toast('กรุณาใส่ Token','error');return;}
+  const s=document.getElementById('gist-status');s.textContent='⏳ กำลังสร้าง...';
   try {
-    const payload = {
-      description: 'Machine PM System Database',
-      public: false,
-      files: {
-        'pm_data.json': { content: JSON.stringify({ machines: state.machines, persons: state.persons, pmLogs: state.pmLogs }, null, 2) }
-      }
-    };
-    const r = await fetch('https://api.github.com/gists', {
-      method: 'POST',
-      headers: { Authorization: 'token ' + token, 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    if (r.ok) {
-      const g = await r.json();
-      state.gistId = g.id;
-      state.gistToken = token;
-      document.getElementById('gist-id').value = g.id;
-      saveLocal();
-      el.textContent = `✅ สร้าง Gist แล้ว: ${g.id}`;
-      toast('สร้าง Gist สำเร็จ ✅', 'success');
-    } else {
-      el.textContent = '❌ สร้าง Gist ไม่ได้';
-      toast('สร้าง Gist ไม่ได้', 'error');
-    }
-  } catch(e) {
-    el.textContent = '❌ เกิดข้อผิดพลาด: ' + e.message;
-    toast('เกิดข้อผิดพลาด', 'error');
-  }
+    const r=await fetch('https://api.github.com/gists',{method:'POST',
+      headers:{Authorization:'token '+token,'Content-Type':'application/json'},
+      body:JSON.stringify({description:'Machine PM System Database',public:false,
+        files:{'pm-data.json':{content:'{"machines":[],"pmLogs":[]}'}}})});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const g=await r.json();
+    state.gistToken=token;state.gistId=g.id;
+    document.getElementById('gist-token').value=token;
+    document.getElementById('gist-id').value=g.id;
+    saveLocal();s.textContent='✅ สร้างแล้ว: '+g.id;toast('สร้าง Gist ✅','success');
+  } catch(e){s.textContent='❌ '+e.message;}
 }
-
-async function pushToGist(silent = false) {
-  if (!state.gistToken || !state.gistId) {
-    if (!silent) toast('ยังไม่ได้ตั้งค่า Gist Token/ID', 'error');
-    return;
-  }
-  const el = document.getElementById('sync-status');
-  if (el) el.textContent = '🔄 กำลัง Push...';
+async function pushToGist() {
+  if(!state.gistToken||!state.gistId){toast('ยังไม่ได้ตั้งค่า Gist','error');return;}
+  const s=document.getElementById('sync-status');if(s)s.textContent='⏳ กำลัง Push...';
   try {
-    const payload = {
-      files: {
-        'pm_data.json': {
-          content: JSON.stringify({ machines: state.machines, persons: state.persons, pmLogs: state.pmLogs })
-        }
-      }
-    };
-    const r = await fetch(`https://api.github.com/gists/${state.gistId}`, {
-      method: 'PATCH',
-      headers: { Authorization: 'token ' + state.gistToken, 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    if (r.ok) {
-      if (el) el.textContent = `✅ Push สำเร็จ: ${new Date().toLocaleTimeString('th-TH')}`;
-      if (!silent) toast('Push ขึ้น Gist สำเร็จ ☁️', 'success');
-    } else {
-      if (el) el.textContent = '❌ Push ไม่สำเร็จ';
-      if (!silent) toast('Push ไม่สำเร็จ', 'error');
-    }
-  } catch(e) {
-    if (el) el.textContent = '❌ เกิดข้อผิดพลาด';
-    if (!silent) toast('Push ไม่ได้: ' + e.message, 'error');
-  }
+    const r=await fetch('https://api.github.com/gists/'+state.gistId,{method:'PATCH',
+      headers:{Authorization:'token '+state.gistToken,'Content-Type':'application/json'},
+      body:JSON.stringify({files:{'pm-data.json':{content:JSON.stringify({machines:state.machines,pmLogs:state.pmLogs},null,2)}}})});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    if(s)s.textContent='✅ Push สำเร็จ '+new Date().toLocaleTimeString('th-TH');
+    toast('Push สำเร็จ ☁️','success');
+  } catch(e){if(s)s.textContent='❌ '+e.message;toast('Push ล้มเหลว','error');}
 }
-
 async function syncFromGist() {
-  if (!state.gistToken || !state.gistId) {
-    toast('ยังไม่ได้ตั้งค่า Gist Token/ID', 'warn');
-    return;
-  }
-  const el = document.getElementById('sync-status');
-  if (el) el.textContent = '🔄 กำลัง Pull...';
+  if(!state.gistToken||!state.gistId)return;
+  const s=document.getElementById('sync-status');if(s)s.textContent='⏳ กำลัง Pull...';
   try {
-    const r = await fetch(`https://api.github.com/gists/${state.gistId}`, {
-      headers: { Authorization: 'token ' + state.gistToken }
-    });
-    if (r.ok) {
-      const g = await r.json();
-      const raw = g.files['pm_data.json']?.content;
-      if (raw) {
-        const d = JSON.parse(raw);
-        state.machines = d.machines || state.machines;
-        state.persons = d.persons || state.persons;
-        state.pmLogs = d.pmLogs || state.pmLogs;
-        saveLocal();
-        renderAll();
-        if (el) el.textContent = `✅ Pull สำเร็จ: ${new Date().toLocaleTimeString('th-TH')}`;
-        toast('ซิงค์ข้อมูลจาก Gist สำเร็จ ⬇️', 'success');
-      }
-    } else {
-      if (el) el.textContent = '❌ Pull ไม่สำเร็จ';
-      toast('Pull ไม่สำเร็จ', 'error');
-    }
-  } catch(e) {
-    if (el) el.textContent = '❌ เกิดข้อผิดพลาด';
-    toast('Pull ไม่ได้: ' + e.message, 'error');
-  }
+    const r=await fetch('https://api.github.com/gists/'+state.gistId,{headers:{Authorization:'token '+state.gistToken}});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const g=await r.json();const raw=g.files['pm-data.json']?.content;
+    if(raw){const d=JSON.parse(raw);if(d.machines)state.machines=d.machines;if(d.pmLogs)state.pmLogs=d.pmLogs;saveLocal();populateFilterDropdowns();renderAll();}
+    if(s)s.textContent='✅ Pull สำเร็จ '+new Date().toLocaleTimeString('th-TH');
+    toast('Sync สำเร็จ ✅','success');
+  } catch(e){if(s)s.textContent='❌ '+e.message;toast('Sync ล้มเหลว','error');}
 }
 
-// ═══════════════════════════════════════
-// EXPORT
-// ═══════════════════════════════════════
+// ── EXPORT ──
 function exportCSV() {
-  const logs = state.pmLogs;
-  if (logs.length === 0) { toast('ไม่มีข้อมูลสำหรับ Export', 'warn'); return; }
-  const rows = [['ID','Timestamp','MachineTag','Description','Type','Location','Status','Inspector','Remark','PhotoCount']];
-  logs.forEach(l => {
-    const m = state.machines.find(m => m.tag === l.machineTag) || {};
-    rows.push([l.id, l.timestamp, l.machineTag, m.description||'', m.type||'', m.location||'', l.status, l.inspector||'', (l.remark||'').replace(/,/g,' '), (l.photos||[]).length]);
+  const rows=[['ID','Timestamp','MachineTag','Description','Type','Location','Status','Inspector','Remark','PhotoCount']];
+  state.pmLogs.sort((a,b)=>b.timestamp.localeCompare(a.timestamp)).forEach(l=>{
+    const m=state.machines.find(m=>m.tag===l.machineTag)||{};
+    rows.push([l.id,l.timestamp,l.machineTag,m.description||'',m.type||'',m.location||'',l.status,l.inspector||'',l.remark||'',(l.photos||[]).length]);
   });
-  const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
-  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `PM_Log_${new Date().toISOString().split('T')[0]}.csv`;
-  a.click();
-  toast('Export CSV แล้ว 📥', 'success');
+  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download='PM_Log_'+new Date().toISOString().split('T')[0]+'.csv';a.click();
+  toast('Export CSV แล้ว 📥','success');
 }
-
 function exportReport() {
-  const month = document.getElementById('summary-month').value;
-  const logs = month ? state.pmLogs.filter(l => l.timestamp.startsWith(month)) : state.pmLogs;
-  const latestStatus = getLatestStatusMap();
-
-  let html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>PM Report ${month}</title>
-  <style>
-    body{font-family:sans-serif;padding:30px;color:#222}
-    h1{color:#1f6feb}
-    table{width:100%;border-collapse:collapse;margin-top:16px}
-    th{background:#1f6feb;color:#fff;padding:8px 10px;text-align:left;font-size:12px}
-    td{padding:7px 10px;border-bottom:1px solid #ddd;font-size:12px}
-    .good{color:#2ea043}.warn{color:#d29922}.stop{color:#da3633}
-    .header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px}
-    .stats{display:flex;gap:20px;margin-bottom:20px}
-    .stat{background:#f6f8fa;border:1px solid #d0d7de;border-radius:8px;padding:12px 20px;text-align:center}
-    .stat-n{font-size:28px;font-weight:700}
-  </style></head><body>
-  <div class="header">
-    <div><h1>🏭 รายงาน PM เครื่องจักร</h1><div style="color:#666">ประจำเดือน: ${month||'ทั้งหมด'}</div></div>
-    <div style="color:#999;font-size:12px">สร้างวันที่: ${new Date().toLocaleDateString('th-TH')}</div>
-  </div>
-  <div class="stats">
-    <div class="stat"><div class="stat-n">${state.machines.length}</div><div>เครื่องทั้งหมด</div></div>
-    <div class="stat"><div class="stat-n good">${Object.values(latestStatus).filter(s=>s==='good').length}</div><div>Good</div></div>
-    <div class="stat"><div class="stat-n warn">${Object.values(latestStatus).filter(s=>s==='warning').length}</div><div>Warning</div></div>
-    <div class="stat"><div class="stat-n stop">${Object.values(latestStatus).filter(s=>s==='stopped').length}</div><div>Under Repair</div></div>
-    <div class="stat"><div class="stat-n" style="color:#1f6feb">${logs.length}</div><div>บันทึกช่วงนี้</div></div>
-  </div>
-  <table><thead><tr><th>วันที่</th><th>Tag</th><th>เครื่องจักร</th><th>Type</th><th>Location</th><th>สถานะ</th><th>ผู้ตรวจ</th><th>หมายเหตุ</th></tr></thead><tbody>`;
-
-  const sorted = [...logs].sort((a,b) => b.timestamp.localeCompare(a.timestamp));
-  sorted.forEach(l => {
-    const m = state.machines.find(m => m.tag === l.machineTag)||{};
-    const t = new Date(l.timestamp).toLocaleString('th-TH');
-    const sc = {good:'good', warning:'warn', stopped:'stop'}[l.status]||'';
-    html += `<tr><td>${t}</td><td>${l.machineTag}</td><td>${m.description||''}</td><td>${m.type||''}</td><td>${m.location||''}</td><td class="${sc}">${statusLabel(l.status)}</td><td>${l.inspector||''}</td><td>${l.remark||''}</td></tr>`;
+  const month=document.getElementById('summary-month').value;
+  const logs=month?state.pmLogs.filter(l=>l.timestamp.startsWith(month)):state.pmLogs;
+  let html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>PM Report '+month+'</title>'+
+    '<style>body{font-family:sans-serif;padding:20px}table{width:100%;border-collapse:collapse}'+
+    'th,td{border:1px solid #ccc;padding:8px;font-size:12px;text-align:left}th{background:#f0f0f0}</style></head><body>'+
+    '<h1>PM Report '+escHtml(month||'ทั้งหมด')+'</h1>'+
+    '<table><thead><tr><th>เวลา</th><th>Tag</th><th>เครื่องจักร</th><th>สถานะ</th><th>ผู้ตรวจ</th><th>หมายเหตุ</th></tr></thead><tbody>';
+  logs.sort((a,b)=>b.timestamp.localeCompare(a.timestamp)).forEach(l=>{
+    const m=state.machines.find(m=>m.tag===l.machineTag)||{};
+    html+='<tr><td>'+new Date(l.timestamp).toLocaleString('th-TH')+'</td><td>'+escHtml(l.machineTag)+'</td>'+
+      '<td>'+escHtml(m.description||l.machineTag)+'</td><td>'+statusLabel(l.status)+'</td>'+
+      '<td>'+escHtml(l.inspector||'—')+'</td><td>'+escHtml(l.remark||'—')+'</td></tr>';
   });
-  html += ['<\/tbody><\/table><\/body><\/html>'].join('');
-
-  const blob = new Blob([html], {type:'text/html;charset=utf-8;'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `PM_Report_${month||'all'}.html`;
-  a.click();
-  toast('Export Report แล้ว 📊', 'success');
+  html+='</tbody></table></body></html>';
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'}));
+  a.download='PM_Report_'+(month||'all')+'.html';a.click();
+  toast('Export Report แล้ว 📊','success');
 }
 
-// ═══════════════════════════════════════
-// UTILS
-// ═══════════════════════════════════════
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) {
-  document.getElementById(id).classList.remove('open');
-  if (id === 'modal-pm') stopCamera();
+// ── UTILS ──
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');if(id==='modal-pm')stopCamera();}
+function toast(msg,type='success'){
+  const el=document.createElement('div');el.className='toast '+type;
+  el.innerHTML='<span>'+({success:'✅',error:'❌',warn:'⚠️'}[type]||'ℹ️')+'</span><span>'+msg+'</span>';
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(()=>{el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(()=>el.remove(),300);},3000);
 }
+function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function clearLocalData(){if(!confirm('ล้างข้อมูลทั้งหมด?'))return;localStorage.removeItem('pmsys_v3');location.reload();}
 
-function toast(msg, type='success') {
-  const container = document.getElementById('toast-container');
-  const el = document.createElement('div');
-  el.className = `toast ${type}`;
-  const icons = {success:'✅', error:'❌', warn:'⚠️'};
-  el.innerHTML = `<span>${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
-  container.appendChild(el);
-  setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity 0.3s'; setTimeout(()=>el.remove(),300); }, 3000);
-}
+init();
 
-function escHtml(str) {
-  return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-function clearLocalData() {
-  if (!confirm('ล้างข้อมูลทั้งหมดในอุปกรณ์นี้?')) return;
-  localStorage.removeItem('pm_state');
-  location.reload();
-}
-
-// Close modal on overlay click
-document.querySelectorAll('.modal-overlay').forEach(o => {
-  o.addEventListener('click', e => {
-    if (e.target === o) closeModal(o.id);
-  });
-});
-
-// ═══════════════════════════════════════
-// FIREBASE CONFIG & AUTH
-// ═══════════════════════════════════════
-let firebaseApp = null;
-let db = null;
-let currentUser = null;
-let currentUserRole = null; // 'admin' | 'user' | 'pending' | 'blocked'
-
-const DEFAULT_ADMIN_EMAILS_KEY = 'pm_admin_emails';
-const FB_CONFIG_KEY = 'pm_firebase_config';
-
-const HARDCODED_ADMIN_EMAILS = ['esuf175@gmail.com'];
-
-function getAdminEmails() {
-  try {
-    const raw = localStorage.getItem(DEFAULT_ADMIN_EMAILS_KEY);
-    const saved = raw ? JSON.parse(raw) : [];
-    // Always include hardcoded admins
-    return [...new Set([...HARDCODED_ADMIN_EMAILS, ...saved])];
-  } catch(e) { return HARDCODED_ADMIN_EMAILS; }
-}
-
-function isAdminEmail(email) {
-  return getAdminEmails().map(e => e.toLowerCase()).includes((email||'').toLowerCase());
-}
-
-function getSavedFirebaseConfig() {
-  try {
-    const raw = localStorage.getItem(FB_CONFIG_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch(e) { return null; }
-}
-
-function showFirebaseConfig() {
-  const cfg = getSavedFirebaseConfig() || {};
-  document.getElementById('fc-apiKey').value = cfg.apiKey || '';
-  document.getElementById('fc-authDomain').value = cfg.authDomain || '';
-  document.getElementById('fc-projectId').value = cfg.projectId || '';
-  document.getElementById('fc-storageBucket').value = cfg.storageBucket || '';
-  document.getElementById('fc-messagingSenderId').value = cfg.messagingSenderId || '';
-  document.getElementById('fc-appId').value = cfg.appId || '';
-  document.getElementById('firebase-config-notice').style.display = 'flex';
-  document.getElementById('login-screen').style.display = 'none';
-}
-
-function saveFirebaseConfig() {
-  const cfg = {
-    apiKey: document.getElementById('fc-apiKey').value.trim(),
-    authDomain: document.getElementById('fc-authDomain').value.trim(),
-    projectId: document.getElementById('fc-projectId').value.trim(),
-    storageBucket: document.getElementById('fc-storageBucket').value.trim(),
-    messagingSenderId: document.getElementById('fc-messagingSenderId').value.trim(),
-    appId: document.getElementById('fc-appId').value.trim(),
-  };
-  if (!cfg.apiKey || !cfg.authDomain || !cfg.projectId) {
-    const errEl = document.getElementById('fc-error');
-    errEl.textContent = '⚠️ กรุณากรอก apiKey, authDomain, projectId อย่างน้อย';
-    errEl.style.display = 'block';
-    return;
-  }
-  localStorage.setItem(FB_CONFIG_KEY, JSON.stringify(cfg));
-  document.getElementById('firebase-config-notice').style.display = 'none';
-  document.getElementById('fc-error').style.display = 'none';
-  // Show loading state while Firebase initializes
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('btn-google-login').disabled = true;
-  document.getElementById('btn-google-login').style.opacity = '0.5';
-  initFirebase(cfg).finally(() => {
-    document.getElementById('btn-google-login').disabled = false;
-    document.getElementById('btn-google-login').style.opacity = '1';
-  });
-}
-
-async function initFirebase(cfg) {
-  // Guard: make sure Firebase SDK is actually loaded
-  if (typeof firebase === 'undefined') {
-    console.error('Firebase SDK not loaded yet');
-    setTimeout(() => initFirebase(cfg), 500);
-    return;
-  }
-  try {
-    // Delete existing app if already initialized
-    try {
-      const existing = firebase.apps;
-      if (existing && existing.length > 0) {
-        await Promise.all(existing.map(a => a.delete()));
-      }
-    } catch(e) { /* ignore */ }
-
-    firebaseApp = firebase.initializeApp(cfg);
-    db = firebase.firestore();
-    // Enable offline persistence
-    db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
-    setupAuthListener();
-  } catch(e) {
-    console.error('Firebase init error:', e);
-    const errEl = document.getElementById('fc-error');
-    if (errEl) {
-      errEl.textContent = '❌ Config ไม่ถูกต้อง: ' + (e.message || e.code || e);
-      errEl.style.display = 'block';
-    }
-    showFirebaseConfig();
-  }
-}
-
-function setupAuthListener() {
-  firebase.auth().onAuthStateChanged(async user => {
-    if (user) {
-      currentUser = user;
-      await resolveUserRole(user);
-    } else {
-      currentUser = null;
-      currentUserRole = null;
-      showLoginScreen();
-    }
-  });
-}
-
-async function resolveUserRole(user) {
-  // 1) Admin email list → instant admin
-  if (isAdminEmail(user.email)) {
-    currentUserRole = 'admin';
-    await ensureUserDoc(user, 'admin');
-    enterApp();
-    return;
-  }
-  try {
-    // 2) Bootstrap: if no other users exist yet → first user becomes admin
-    const allSnap = await db.collection('users').get();
-    const otherUsers = allSnap.docs.filter(d => d.id !== user.uid);
-    if (otherUsers.length === 0) {
-      currentUserRole = 'admin';
-      await ensureUserDoc(user, 'admin');
-      toast('🎉 คุณเป็น Admin คนแรกของระบบ!', 'success');
-      enterApp();
-      return;
-    }
-    // 3) Check existing user doc
-    const doc = await db.collection('users').doc(user.uid).get();
-    if (doc.exists) {
-      const data = doc.data();
-      currentUserRole = data.role || 'pending';
-      if (currentUserRole === 'blocked') {
-        showLoginError('บัญชีของคุณถูกระงับการใช้งาน กรุณาติดต่อ Admin');
-        firebase.auth().signOut();
-        return;
-      }
-      if (currentUserRole === 'pending') {
-        showPendingScreen(user);
-        addActivityLog(user.email, 'login_pending', 'รอการอนุมัติ');
-        startApprovalPolling(user);
-        return;
-      }
-    } else {
-      // 4) New user → create pending doc
-      await ensureUserDoc(user, 'pending');
-      currentUserRole = 'pending';
-      showPendingScreen(user);
-      addActivityLog(user.email, 'register', 'สมัครใหม่ รอ Admin อนุมัติ');
-      startApprovalPolling(user);
-      return;
-    }
-  } catch(e) {
-    console.warn('Firestore error:', e);
-    currentUserRole = 'user';
-  }
-  enterApp();
-}
-
-async function ensureUserDoc(user, defaultRole) {
-  try {
-    const ref = db.collection('users').doc(user.uid);
-    const doc = await ref.get();
-    if (!doc.exists) {
-      await ref.set({
-        uid: user.uid,
-        email: user.email,
-        name: user.displayName || '',
-        photoURL: user.photoURL || '',
-        role: defaultRole,
-        createdAt: new Date().toISOString(),
-        lastLogin: new Date().toISOString(),
-      });
-    } else {
-      await ref.update({ lastLogin: new Date().toISOString() });
-    }
-  } catch(e) { console.warn('ensureUserDoc error:', e); }
-}
-
-// ── PENDING SCREEN ──
-let _approvalTimer = null;
-
-function showPendingScreen(user) {
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('login-pending').style.display = 'block';
-  document.getElementById('btn-google-login').style.display = 'none';
-  const emailEl = document.getElementById('pending-email-display');
-  if (emailEl) emailEl.textContent = user.email;
-}
-
-function startApprovalPolling(user) {
-  if (_approvalTimer) clearInterval(_approvalTimer);
-  _approvalTimer = setInterval(async () => {
-    try {
-      const doc = await db.collection('users').doc(user.uid).get();
-      if (doc.exists) {
-        const role = doc.data().role;
-        if (role && role !== 'pending' && role !== 'blocked') {
-          clearInterval(_approvalTimer);
-          currentUserRole = role;
-          toast('✅ บัญชีได้รับการอนุมัติแล้ว! กำลังเข้าสู่ระบบ...', 'success');
-          setTimeout(() => enterApp(), 1200);
-        }
-      }
-    } catch(e) {}
-  }, 15000); // poll every 15s
-}
-
-async function recheckApproval() {
-  if (!currentUser) return;
-  const btn = document.querySelector('[onclick="recheckApproval()"]');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังตรวจสอบ...'; }
-  try {
-    const doc = await db.collection('users').doc(currentUser.uid).get();
-    if (doc.exists) {
-      const role = doc.data().role;
-      if (role && role !== 'pending' && role !== 'blocked') {
-        currentUserRole = role;
-        if (_approvalTimer) clearInterval(_approvalTimer);
-        toast('✅ ได้รับการอนุมัติแล้ว!', 'success');
-        setTimeout(() => enterApp(), 800);
-        return;
-      } else if (role === 'blocked') {
-        toast('บัญชีถูกระงับ', 'error');
-        signOutFromPending();
-        return;
-      }
-    }
-    toast('⏳ ยังรอการอนุมัติอยู่', 'warn');
-  } catch(e) {
-    toast('ตรวจสอบไม่ได้: ' + e.message, 'error');
-  }
-  if (btn) { btn.disabled = false; btn.textContent = '🔄 รีเฟรชสถานะ'; }
-}
-
-async function signOutFromPending() {
-  if (_approvalTimer) clearInterval(_approvalTimer);
-  await firebase.auth().signOut();
-  document.getElementById('login-pending').style.display = 'none';
-  document.getElementById('btn-google-login').style.display = 'flex';
-  document.getElementById('btn-google-login').style.opacity = '1';
-  document.getElementById('btn-google-login').disabled = false;
-}
-
-function enterApp() {
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('firebase-config-notice').style.display = 'none';
-
-  // Show user in topbar
-  const userEl = document.getElementById('topbar-user');
-  userEl.style.display = 'flex';
-  userEl.style.alignItems = 'center';
-  if (currentUser.photoURL) {
-    document.getElementById('topbar-avatar').src = currentUser.photoURL;
-    document.getElementById('topbar-avatar').style.display = '';
-  } else {
-    document.getElementById('topbar-avatar').style.display = 'none';
-  }
-  document.getElementById('topbar-username').textContent = currentUser.displayName || currentUser.email;
-
-  // Show admin button + settings tab + admin-only UI if admin
-  if (currentUserRole === 'admin') {
-    document.getElementById('topbar-admin-btn').style.display = 'flex';
-    const navSettings = document.getElementById('nav-settings');
-    if (navSettings) navSettings.style.display = '';
-    const machineAdminBtns = document.getElementById('machines-admin-btns');
-    if (machineAdminBtns) machineAdminBtns.style.display = 'flex';
-  }
-
-  addActivityLog(currentUser.email, 'login', 'เข้าสู่ระบบสำเร็จ');
-
-  // Pull master data from Firestore
-  pullMasterData();
-
-  // Admin: watch pending users realtime for badge
-  if (currentUserRole === 'admin' && db) {
-    db.collection('users').where('role','==','pending')
-      .onSnapshot(snap => {
-        const count = snap.size;
-        const badge = document.getElementById('pending-badge');
-        const countBadge = document.getElementById('pending-count-badge');
-        if (badge) {
-          badge.textContent = count;
-          badge.style.display = count > 0 ? 'flex' : 'none';
-          badge.style.alignItems = 'center';
-          badge.style.justifyContent = 'center';
-        }
-        if (countBadge) countBadge.textContent = count;
-      }, () => {});
-  }
-}
-
-async function signInWithGoogle() {
-  const btn = document.getElementById('btn-google-login');
-  btn.style.opacity = '0.7';
-  btn.disabled = true;
-  document.getElementById('login-error').style.display = 'none';
-  try {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: 'select_account' });
-    await firebase.auth().signInWithPopup(provider);
-  } catch(e) {
-    btn.style.opacity = '1';
-    btn.disabled = false;
-    if (e.code !== 'auth/popup-closed-by-user') {
-      showLoginError('เข้าสู่ระบบไม่ได้: ' + (e.message || e.code));
-    }
-  }
-}
-
-async function signOut() {
-  if (!confirm('ออกจากระบบ?')) return;
-  addActivityLog(currentUser?.email, 'logout', 'ออกจากระบบ');
-  await firebase.auth().signOut();
-  document.getElementById('topbar-user').style.display = 'none';
-  document.getElementById('topbar-admin-btn').style.display = 'none';
-  currentUser = null;
-  currentUserRole = null;
-  showLoginScreen();
-}
-
-function showLoginScreen() {
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('login-pending').style.display = 'none';
-  document.getElementById('btn-google-login').style.display = 'flex';
-  document.getElementById('btn-google-login').style.opacity = '1';
-  document.getElementById('btn-google-login').disabled = false;
-}
-
-function showLoginError(msg) {
-  const el = document.getElementById('login-error');
-  el.textContent = msg;
-  el.style.display = 'block';
-}
-
-// ═══════════════════════════════════════
-// FIRESTORE MASTER DATA SYNC
-// ═══════════════════════════════════════
-async function pullMasterData() {
-  if (!db) return;
-  try {
-    const doc = await db.collection('config').doc('master').get();
-    if (doc.exists) {
-      const d = doc.data();
-      if (d.machines && d.machines.length) state.machines = d.machines;
-      if (d.persons && d.persons.length) state.persons = d.persons;
-      if (d.gistToken) state.gistToken = d.gistToken;
-      if (d.gistId) state.gistId = d.gistId;
-      saveLocal();
-      renderAll();
-      toast('ซิงค์ข้อมูลจาก Firestore ✅', 'success');
-    }
-    // Pull PM logs
-    const logsSnap = await db.collection('pmLogs').orderBy('timestamp','desc').limit(500).get();
-    if (!logsSnap.empty) {
-      const remoteLogs = logsSnap.docs.map(d => d.data());
-      // Merge: keep local only records not in remote
-      const remoteIds = new Set(remoteLogs.map(l => l.id));
-      const localOnly = state.pmLogs.filter(l => !remoteIds.has(l.id));
-      state.pmLogs = [...remoteLogs, ...localOnly];
-      saveLocal();
-      renderAll();
-    }
-  } catch(e) { console.warn('pullMasterData error:', e); }
-}
-
-async function pushMasterData() {
-  if (!db || currentUserRole !== 'admin') return;
-  try {
-    await db.collection('config').doc('master').set({
-      machines: state.machines,
-      persons: state.persons,
-      gistToken: state.gistToken,
-      gistId: state.gistId,
-      updatedAt: new Date().toISOString(),
-      updatedBy: currentUser?.email || '',
-    });
-    toast('บันทึก Master Data ขึ้น Firestore ✅', 'success');
-    addActivityLog(currentUser?.email, 'push_master', `machines:${state.machines.length} persons:${state.persons.length}`);
-  } catch(e) {
-    toast('Push Firestore ไม่ได้: ' + e.message, 'error');
-  }
-}
-
-async function pushPmLogToFirestore(record) {
-  if (!db) return;
-  try {
-    await db.collection('pmLogs').doc(record.id).set({
-      ...record,
-      photos: [], // don't store base64 in Firestore — keep in Gist
-      userEmail: currentUser?.email || '',
-    });
-  } catch(e) { console.warn('pushPmLog error:', e); }
-}
-
-// ═══════════════════════════════════════
-// ACTIVITY LOG
-// ═══════════════════════════════════════
-function addActivityLog(email, action, detail) {
-  try {
-    const logs = JSON.parse(localStorage.getItem('pm_activity_log') || '[]');
-    logs.unshift({ email, action, detail, timestamp: new Date().toISOString() });
-    localStorage.setItem('pm_activity_log', JSON.stringify(logs.slice(0, 500)));
-    // Push to Firestore
-    if (db) {
-      db.collection('activityLogs').add({ email, action, detail, timestamp: new Date().toISOString() }).catch(() => {});
-    }
-  } catch(e) {}
-}
-
-// ═══════════════════════════════════════
-// ADMIN PANEL
-// ═══════════════════════════════════════
-function openAdminPanel() {
-  if (currentUserRole !== 'admin') { toast('ไม่มีสิทธิ์ Admin', 'error'); return; }
-  document.getElementById('admin-panel').style.display = 'block';
-  document.getElementById('admin-gist-token').value = state.gistToken;
-  document.getElementById('admin-gist-id').value = state.gistId;
-  document.getElementById('admin-emails-list').value = getAdminEmails().join('\n');
-  loadUsers();
-  renderAdminMachines();
-  renderAdminPersons();
-  loadActivityLog();
-}
-
-function closeAdminPanel() {
-  document.getElementById('admin-panel').style.display = 'none';
-}
-
-function showAdminTab(name) {
-  document.querySelectorAll('.admin-tab-content').forEach(el => el.style.display = 'none');
-  document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('atab-' + name).style.display = 'block';
-  document.querySelector(`[data-atab="${name}"]`).classList.add('active');
-}
-
-// ── USERS ──
-let _allUsers = [];
-let _userFilter = 'all';
-
-async function loadUsers() {
-  const el = document.getElementById('admin-users-list');
-  el.innerHTML = '<div class="loading"><div class="spinner"></div>กำลังโหลด...</div>';
-  if (!db) { el.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:12px">ไม่ได้เชื่อมต่อ Firestore</div>'; return; }
-  try {
-    const snap = await db.collection('users').get();
-    // Sort: pending first, then by createdAt desc
-    _allUsers = snap.docs.map(d => d.data()).sort((a, b) => {
-      const order = { pending: 0, blocked: 1, user: 2, admin: 3 };
-      const oa = order[a.role] ?? 2, ob = order[b.role] ?? 2;
-      if (oa !== ob) return oa - ob;
-      return (b.createdAt || '').localeCompare(a.createdAt || '');
-    });
-    // Update pending count badge
-    const pendingCount = _allUsers.filter(u => u.role === 'pending').length;
-    const countBadge = document.getElementById('pending-count-badge');
-    if (countBadge) countBadge.textContent = pendingCount;
-    renderUserList();
-  } catch(e) {
-    el.innerHTML = `<div style="color:var(--stop);font-size:12px;padding:12px">❌ ${e.message}</div>`;
-  }
-}
-
-function filterUserList(filter, btn) {
-  _userFilter = filter;
-  document.querySelectorAll('.user-filter-btn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  renderUserList();
-}
-
-function renderUserList() {
-  const el = document.getElementById('admin-users-list');
-  const users = _userFilter === 'all' ? _allUsers : _allUsers.filter(u => u.role === _userFilter);
-  if (users.length === 0) {
-    el.innerHTML = '<div style="color:var(--text3);padding:16px;font-size:13px;text-align:center">ไม่มีผู้ใช้ในกลุ่มนี้</div>';
-    return;
-  }
-  const roleBadgeMap = {
-    admin: '<span class="user-role-badge role-admin">ADMIN</span>',
-    user: '<span class="user-role-badge role-user">USER</span>',
-    pending: '<span class="user-role-badge role-pending">⏳ PENDING</span>',
-    blocked: '<span class="user-role-badge role-blocked">🚫 BLOCKED</span>',
-  };
-  el.innerHTML = users.map(u => {
-    const roleBadge = roleBadgeMap[u.role] || roleBadgeMap.pending;
-    const lastLogin = u.lastLogin ? new Date(u.lastLogin).toLocaleString('th-TH',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '—';
-    const createdAt = u.createdAt ? new Date(u.createdAt).toLocaleDateString('th-TH') : '—';
-    const isPending = u.role === 'pending';
-    return `<div class="user-row" style="${isPending ? 'border-color:var(--accent);background:rgba(31,111,235,0.05)' : ''}">
-      ${u.photoURL ? `<img src="${escHtml(u.photoURL)}" class="user-avatar">` : `<div class="user-avatar" style="background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:16px">${u.role==='admin'?'👨‍💼':'👤'}</div>`}
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(u.name||u.email)}</div>
-        <div style="font-size:11px;color:var(--text3)">${escHtml(u.email)}</div>
-        <div style="font-size:10px;color:var(--text3);margin-top:2px">สมัคร: ${createdAt} · เข้าล่าสุด: ${lastLogin}</div>
-      </div>
-      ${roleBadge}
-      <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;flex-shrink:0;min-width:0">
-        ${u.role !== 'admin' ? `<button class="btn btn-sm" style="font-size:11px;border-color:var(--warn);color:var(--warn)" onclick="setUserRole('${u.uid}','admin')">🛡️ Admin</button>` : ''}
-        ${u.role !== 'user' && u.role !== 'admin' ? `<button class="btn btn-sm btn-success" style="font-size:11px" onclick="setUserRole('${u.uid}','user')">✅ Approve</button>` : ''}
-        ${u.role === 'user' ? `<button class="btn btn-sm" style="font-size:11px;border-color:var(--warn);color:var(--warn)" onclick="setUserRole('${u.uid}','admin')">Promote Admin</button>` : ''}
-        ${u.role !== 'blocked' && u.uid !== currentUser?.uid ? `<button class="btn btn-sm btn-danger" style="font-size:11px" onclick="setUserRole('${u.uid}','blocked')">🚫 Block</button>` : ''}
-        ${u.role === 'blocked' ? `<button class="btn btn-sm btn-success" style="font-size:11px" onclick="setUserRole('${u.uid}','user')">Unblock</button>` : ''}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-async function setUserRole(uid, role) {
-  if (!db) return;
-  const label = {admin:'Admin', user:'User', blocked:'Blocked'}[role] || role;
-  if (!confirm(`เปลี่ยนสิทธิ์เป็น ${label}?`)) return;
-  try {
-    await db.collection('users').doc(uid).update({ role });
-    toast(`เปลี่ยนเป็น ${label} ✅`, 'success');
-    addActivityLog(currentUser?.email, 'set_role', `uid:${uid} → ${role}`);
-    loadUsers();
-  } catch(e) { toast('เปลี่ยน Role ไม่ได้: ' + e.message, 'error'); }
-}
-
-// ── ADMIN MACHINES TABLE ──
-function renderAdminMachines() {
-  const el = document.getElementById('admin-machines-table');
-  if (state.machines.length === 0) {
-    el.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:12px">ยังไม่มีเครื่องจักร — Import Excel หรือ เพิ่มด้วยตนเอง</div>';
-    return;
-  }
-  el.innerHTML = `<div class="table-wrap"><table>
-    <thead><tr><th>Tag</th><th>Description</th><th>Type</th><th>Location</th><th></th></tr></thead>
-    <tbody>${state.machines.map((m,i) => `<tr>
-      <td><span class="machine-tag">${escHtml(m.tag)}</span></td>
-      <td>${escHtml(m.description)}</td>
-      <td style="color:var(--text2)">${escHtml(m.type)}</td>
-      <td style="color:var(--text2)">${escHtml(m.location)}</td>
-      <td style="display:flex;gap:4px">
-        <button class="btn btn-sm" onclick="editMachine(${i})" style="font-size:11px">✏️</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteMachine(${i})" style="font-size:11px">🗑️</button>
-      </td>
-    </tr>`).join('')}</tbody>
-  </table></div>`;
-}
-
-function openAddMachineModal(idx) {
-  document.getElementById('edit-machine-idx').value = idx !== undefined ? idx : '';
-  document.getElementById('add-machine-title').textContent = idx !== undefined ? 'แก้ไขเครื่องจักร' : 'เพิ่มเครื่องจักร';
-  const m = idx !== undefined ? state.machines[idx] : {};
-  document.getElementById('m-tag').value = m.tag || '';
-  document.getElementById('m-desc').value = m.description || '';
-  document.getElementById('m-type').value = m.type || '';
-  document.getElementById('m-loc').value = m.location || '';
-  openModal('modal-add-machine');
-}
-
-function editMachine(i) { openAddMachineModal(i); }
-
-function saveMachineEntry() {
-  const tag = document.getElementById('m-tag').value.trim();
-  const desc = document.getElementById('m-desc').value.trim();
-  if (!tag || !desc) { toast('Tag และ Description จำเป็น', 'error'); return; }
-  const entry = { tag, description: desc, type: document.getElementById('m-type').value.trim(), location: document.getElementById('m-loc').value.trim() };
-  const idx = document.getElementById('edit-machine-idx').value;
-  if (idx !== '') {
-    state.machines[parseInt(idx)] = entry;
-    toast('แก้ไขเครื่องจักรแล้ว ✅', 'success');
-  } else {
-    if (state.machines.find(m => m.tag === tag)) { toast('Tag ซ้ำ', 'error'); return; }
-    state.machines.push(entry);
-    toast('เพิ่มเครื่องจักรแล้ว ✅', 'success');
-  }
-  saveLocal(); populateFilterDropdowns(); updateBadges();
-  renderAdminMachines(); renderMachines();
-  pushMasterData();
-  closeModal('modal-add-machine');
-}
-
-function deleteMachine(i) {
-  if (!confirm(`ลบ "${state.machines[i].tag}"?`)) return;
-  state.machines.splice(i, 1);
-  saveLocal(); updateBadges(); renderAdminMachines(); renderMachines(); populateFilterDropdowns();
-  pushMasterData();
-  toast('ลบเครื่องจักรแล้ว', 'warn');
-}
-
-// ── ADMIN PERSONS TABLE ──
-function renderAdminPersons() {
-  const el = document.getElementById('admin-persons-table');
-  if (state.persons.length === 0) {
-    el.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:12px">ยังไม่มีบุคลากร</div>';
-    return;
-  }
-  el.innerHTML = `<div class="table-wrap"><table>
-    <thead><tr><th>ID</th><th>Name</th><th>Shift</th><th>Level</th><th></th></tr></thead>
-    <tbody>${state.persons.map((p,i) => `<tr>
-      <td style="font-family:var(--mono);font-size:12px">${escHtml(p.id)}</td>
-      <td>${escHtml(p.name)}</td>
-      <td style="color:var(--text2)">${escHtml(p.shift)}</td>
-      <td style="color:var(--text2)">${escHtml(p.level)}</td>
-      <td style="display:flex;gap:4px">
-        <button class="btn btn-sm" onclick="editPerson(${i})" style="font-size:11px">✏️</button>
-        <button class="btn btn-sm btn-danger" onclick="deletePerson(${i})" style="font-size:11px">🗑️</button>
-      </td>
-    </tr>`).join('')}</tbody>
-  </table></div>`;
-}
-
-function openAddPersonModal(idx) {
-  document.getElementById('edit-person-idx').value = idx !== undefined ? idx : '';
-  document.getElementById('add-person-title').textContent = idx !== undefined ? 'แก้ไขบุคลากร' : 'เพิ่มบุคลากร';
-  const p = idx !== undefined ? state.persons[idx] : {};
-  document.getElementById('p-id').value = p.id || '';
-  document.getElementById('p-name').value = p.name || '';
-  document.getElementById('p-shift').value = p.shift || '';
-  document.getElementById('p-level').value = p.level || '';
-  openModal('modal-add-person');
-}
-
-function editPerson(i) { openAddPersonModal(i); }
-
-function savePersonEntry() {
-  const name = document.getElementById('p-name').value.trim();
-  if (!name) { toast('กรุณาใส่ชื่อ', 'error'); return; }
-  const entry = { id: document.getElementById('p-id').value.trim(), name, shift: document.getElementById('p-shift').value, level: document.getElementById('p-level').value };
-  const idx = document.getElementById('edit-person-idx').value;
-  if (idx !== '') {
-    state.persons[parseInt(idx)] = entry;
-    toast('แก้ไขบุคลากรแล้ว ✅', 'success');
-  } else {
-    state.persons.push(entry);
-    toast('เพิ่มบุคลากรแล้ว ✅', 'success');
-  }
-  saveLocal(); populatePersonSelect();
-  renderAdminPersons(); renderPersonPreview();
-  pushMasterData();
-  closeModal('modal-add-person');
-}
-
-function deletePerson(i) {
-  if (!confirm(`ลบ "${state.persons[i].name}"?`)) return;
-  state.persons.splice(i, 1);
-  saveLocal(); populatePersonSelect(); renderAdminPersons(); renderPersonPreview();
-  pushMasterData();
-  toast('ลบบุคลากรแล้ว', 'warn');
-}
-
-// ── CONFIG ──
-function saveAdminGistConfig() {
-  state.gistToken = document.getElementById('admin-gist-token').value.trim();
-  state.gistId = document.getElementById('admin-gist-id').value.trim();
-  saveLocal();
-  pushMasterData();
-  toast('บันทึก Gist Config แล้ว ✅', 'success');
-}
-
-function saveAdminEmails() {
-  const raw = document.getElementById('admin-emails-list').value;
-  const emails = raw.split('\n').map(e => e.trim()).filter(Boolean);
-  localStorage.setItem(DEFAULT_ADMIN_EMAILS_KEY, JSON.stringify(emails));
-  toast(`บันทึก Admin Emails ${emails.length} รายการ ✅`, 'success');
-  addActivityLog(currentUser?.email, 'update_admin_emails', `${emails.length} emails`);
-}
-
-// ── ACTIVITY LOG ──
-function loadActivityLog() {
-  const el = document.getElementById('admin-activity-log');
-  const logs = JSON.parse(localStorage.getItem('pm_activity_log') || '[]');
-  if (logs.length === 0) { el.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:12px">ไม่มี Log</div>'; return; }
-  el.innerHTML = `<div class="table-wrap"><table>
-    <thead><tr><th>เวลา</th><th>User</th><th>Action</th><th>รายละเอียด</th></tr></thead>
-    <tbody>${logs.slice(0,200).map(l => {
-      const t = new Date(l.timestamp).toLocaleString('th-TH',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
-      return `<tr><td style="font-family:var(--mono);font-size:11px;white-space:nowrap">${t}</td><td style="font-size:12px">${escHtml(l.email||'—')}</td><td><span style="font-family:var(--mono);font-size:11px;background:var(--bg4);padding:2px 6px;border-radius:4px">${escHtml(l.action)}</span></td><td style="font-size:12px;color:var(--text2)">${escHtml(l.detail||'')}</td></tr>`;
-    }).join('')}</tbody>
-  </table></div>`;
-}
-
-function exportActivityLog() {
-  const logs = JSON.parse(localStorage.getItem('pm_activity_log') || '[]');
-  const rows = [['Timestamp','Email','Action','Detail'], ...logs.map(l => [l.timestamp, l.email||'', l.action, l.detail||''])];
-  const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
-  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `PM_ActivityLog_${new Date().toISOString().split('T')[0]}.csv`;
-  a.click();
-}
-
-// ═══════════════════════════════════════
-// OVERRIDE savePmRecord to push to Firestore
-// ═══════════════════════════════════════
-const _origSavePm = savePmRecord;
-// (patched inline below in init override)
-
-// ═══════════════════════════════════════
-// THEME TOGGLE
-// ═══════════════════════════════════════
-function initTheme() {
-  const saved = localStorage.getItem('pm_theme') || 'dark';
-  applyTheme(saved);
-}
-
-function applyTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme);
-  localStorage.setItem('pm_theme', theme);
-  const btn = document.getElementById('btn-theme');
-  if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
-}
-
-function toggleTheme() {
-  const current = document.documentElement.getAttribute('data-theme') || 'dark';
-  applyTheme(current === 'dark' ? 'light' : 'dark');
-}
-
-// ═══════════════════════════════════════
-// BOOT — wait for DOM + all scripts ready
-// ═══════════════════════════════════════
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
-} else {
-  init(); // DOM already ready (e.g. script at bottom)
-}
 </script>
 </body>
 </html>
