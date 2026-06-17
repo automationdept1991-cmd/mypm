@@ -27,8 +27,6 @@
 html{-webkit-text-size-adjust:100%}
 body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;
   min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
-
-/* ── TOPBAR ── */
 .topbar{background:var(--bg2);border-bottom:1px solid var(--border);
   padding:0 12px;display:flex;align-items:center;justify-content:space-between;
   height:var(--top-h);position:sticky;top:0;z-index:100;gap:8px}
@@ -44,16 +42,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .topbar-role-badge{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:700}
 .topbar-role-badge.admin{background:rgba(31,111,235,.2);color:var(--accent2)}
 .topbar-role-badge.user{background:var(--bg3);color:var(--text2)}
-
-/* ── NAV ── */
 .nav-tabs{display:none;gap:2px;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 16px;overflow-x:auto}
 .nav-tab{padding:11px 16px;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;
   font-size:13px;font-weight:500;white-space:nowrap;transition:all .15s;display:flex;align-items:center;gap:6px}
 .nav-tab:hover{color:var(--text)}
 .nav-tab.active{color:var(--accent2);border-bottom-color:var(--accent2)}
 .nav-tab .badge{background:var(--bg4);color:var(--text2);font-size:10px;padding:1px 6px;border-radius:10px;font-family:var(--mono)}
-
-/* ── BOTTOM NAV ── */
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);
   border-top:1px solid var(--border);z-index:100;padding-bottom:env(safe-area-inset-bottom,0px)}
 .bottom-nav-inner{display:flex;height:var(--nav-h)}
@@ -66,8 +60,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .bottom-nav-item.active::after{content:'';position:absolute;top:0;left:20%;right:20%;
   height:2px;background:var(--accent2);border-radius:0 0 3px 3px}
 .bottom-nav-item:active{background:rgba(255,255,255,.04)}
-
-/* ── FAB ── */
 .fab{position:fixed;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 14px);
   right:16px;width:52px;height:52px;border-radius:50%;background:var(--accent);
   color:#fff;border:none;font-size:28px;cursor:pointer;
@@ -75,12 +67,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
   display:flex;align-items:center;justify-content:center;
   transition:transform .15s;-webkit-tap-highlight-color:transparent}
 .fab:active{transform:scale(.92)}
-
-/* ── MAIN ── */
 .main{padding:14px 12px calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 70px)}
 .page{display:none}.page.active{display:block}
-
-/* ── BUTTONS ── */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;
   border-radius:8px;border:1px solid var(--border2);cursor:pointer;font-size:13px;
   font-family:var(--font);font-weight:500;transition:all .15s;background:var(--bg4);
@@ -92,12 +80,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .btn-success{border-color:var(--good);color:var(--good)}
 .btn-full{width:100%}
 .btn-icon{width:38px;height:38px;padding:0;border-radius:10px;font-size:18px;min-height:unset}
-
-/* ── CARD ── */
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px}
 .card-title{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
-
-/* ── STATS ── */
 .stats-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
 .stat-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:14px 12px;text-align:center}
 .stat-card.good{border-color:var(--good-b);background:var(--good-bg)}
@@ -106,16 +90,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .stat-num{font-family:var(--mono);font-size:30px;font-weight:600;line-height:1;margin-bottom:4px}
 .stat-card.good .stat-num{color:var(--good)}.stat-card.warn .stat-num{color:var(--warn)}.stat-card.stop .stat-num{color:var(--stop)}
 .stat-label{font-size:11px;color:var(--text2)}
-
-/* ── STATUS BADGE ── */
 .status-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;
   border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
 .status-badge::before{content:'●';font-size:7px}
 .status-badge.good{background:var(--good-bg);color:var(--good);border:1px solid var(--good-b)}
 .status-badge.warning{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-b)}
 .status-badge.stopped{background:var(--stop-bg);color:var(--stop);border:1px solid var(--stop-b)}
-
-/* ── MACHINE CARDS ── */
 .machine-grid{display:flex;flex-direction:column;gap:10px}
 .machine-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .machine-card:active{opacity:.85}
@@ -128,8 +108,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .machine-meta-row{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2)}
 .machine-footer{padding:10px 14px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,.15);gap:8px}
 .machine-footer-time{font-size:11px;color:var(--text3);font-family:var(--mono)}
-
-/* ── FILTER ── */
 .filter-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
 .filter-row .filter-input{flex:1;min-width:0}
 .filter-bar{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center}
@@ -142,8 +120,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .filter-chip.good.active{border-color:var(--good);color:var(--good);background:var(--good-bg)}
 .filter-chip.warn.active{border-color:var(--warn);color:var(--warn);background:var(--warn-bg)}
 .filter-chip.stop.active{border-color:var(--stop);color:var(--stop);background:var(--stop-bg)}
-
-/* ── MODAL ── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)}
 .modal-overlay.open{display:flex}
 .modal{background:var(--bg2);border:1px solid var(--border2);border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:92dvh;overflow-y:auto;box-shadow:0 -8px 40px rgba(0,0,0,.5);-webkit-overflow-scrolling:touch}
@@ -154,15 +130,11 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .modal-body{padding:16px 18px}
 .modal-footer{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;position:sticky;bottom:0;background:var(--bg2)}
 .modal-footer .btn{flex:1}
-
-/* ── FORM ── */
 .form-group{margin-bottom:16px}
 .form-label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:7px;text-transform:uppercase;letter-spacing:.5px}
 .form-input,.form-select,.form-textarea{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:11px 13px;color:var(--text);font-family:var(--font);font-size:15px;transition:border-color .15s;min-height:44px}
 .form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--accent)}
 .form-textarea{resize:vertical;min-height:90px;font-size:14px}
-
-/* ── STATUS RADIO ── */
 .status-radio-group{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 .status-radio{display:none}
 .status-radio-label{display:flex;flex-direction:column;align-items:center;gap:5px;padding:14px 6px;border-radius:10px;border:2px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;text-align:center;transition:all .15s;color:var(--text2);-webkit-tap-highlight-color:transparent}
@@ -170,8 +142,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .status-radio:checked + .status-radio-label.good{border-color:var(--good);background:var(--good-bg);color:var(--good)}
 .status-radio:checked + .status-radio-label.warn{border-color:var(--warn);background:var(--warn-bg);color:var(--warn)}
 .status-radio:checked + .status-radio-label.stop{border-color:var(--stop);background:var(--stop-bg);color:var(--stop)}
-
-/* ── CAMERA ── */
 .camera-area{background:#000;border:1px solid var(--border);border-radius:10px;overflow:hidden}
 #camera-preview{width:100%;height:240px;object-fit:cover;display:block}
 .camera-controls{display:flex;gap:8px;justify-content:center;padding:10px;background:var(--bg4)}
@@ -179,8 +149,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 .photo-thumb{position:relative;width:72px;height:72px;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
 .photo-thumb img{width:100%;height:100%;object-fit:cover}
 .photo-thumb-del{position:absolute;top:3px;right:3px;background:rgba(0,0,0,.75);color:#fff;border:none;width:20px;height:20px;border-radius:50%;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-
-/* ── TABLE ── */
 .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;border:1px solid var(--border)}
 table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
 th{background:var(--bg3);color:var(--text2);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
@@ -189,19 +157,13 @@ tr:last-child td{border-bottom:none}
 tr:hover td{background:var(--bg3)}
 .no-data{text-align:center;padding:50px 20px;color:var(--text3);font-size:13px}
 .no-data .icon{font-size:36px;margin-bottom:10px}
-
-/* ── SETUP ── */
 .setup-step{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px}
 .setup-step h3{font-size:14px;font-weight:600;margin-bottom:6px}
 .setup-step p{font-size:12px;color:var(--text2);line-height:1.6;margin-bottom:12px}
-
-/* ── TOAST ── */
 .toast-container{position:fixed;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 10px);left:12px;right:12px;z-index:300;display:flex;flex-direction:column;gap:8px;pointer-events:none}
 .toast{background:var(--bg3);border:1px solid var(--border2);border-radius:10px;padding:11px 16px;font-size:13px;display:flex;align-items:center;gap:10px;animation:slideUp .25s ease;box-shadow:0 4px 20px rgba(0,0,0,.4)}
 .toast.success{border-color:var(--good)}.toast.error{border-color:var(--stop)}.toast.warn{border-color:var(--warn)}
 @keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
-
-/* ── SECTION HEADER ── */
 .section-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:10px;flex-wrap:wrap}
 .section-header-actions{display:flex;gap:8px;flex-wrap:wrap}
 .section-title{font-size:17px;font-weight:700}
@@ -214,8 +176,6 @@ tr:hover td{background:var(--bg3)}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
 #snap-canvas{display:none}
-
-/* ═══ AUTH ═══ */
 .auth-screen{position:fixed;inset:0;background:var(--bg);z-index:400;display:flex;align-items:center;justify-content:center;padding:20px}
 .auth-screen.hidden{display:none}
 .auth-box{width:100%;max-width:380px}
@@ -233,23 +193,22 @@ tr:hover td{background:var(--bg3)}
 .auth-success{background:var(--good-bg);border:1px solid var(--good-b);color:var(--good);border-radius:8px;padding:10px 13px;font-size:13px;margin-bottom:12px;display:none;line-height:1.5}
 .auth-success.show{display:block}
 .auth-hint{font-size:11px;color:var(--text3);text-align:center;margin-top:14px;line-height:1.6}
-
-/* ── USER MANAGEMENT ── */
+/* ── NO-GIST NOTICE on register panel ── */
+.auth-notice{background:var(--warn-bg);border:1px solid var(--warn-b);color:var(--warn);border-radius:8px;padding:10px 13px;font-size:12px;margin-bottom:14px;line-height:1.6;display:none}
+.auth-notice.show{display:block}
 .user-row{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--border);gap:10px}
 .user-row:last-child{border-bottom:none}
 .user-row-info{min-width:0}
 .user-row-name{font-weight:600;font-size:13px;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .user-row-meta{font-size:11px;color:var(--text2)}
-
-/* ── SETTINGS ── */
 .settings-section{background:var(--bg2);border:1px solid var(--border);border-radius:12px;margin-bottom:12px;overflow:hidden}
 .settings-section-title{padding:12px 16px;font-weight:700;font-size:13px;border-bottom:1px solid var(--border);background:var(--bg3);display:flex;align-items:center;gap:8px}
 .settings-section-body{padding:16px}
-
-/* ── DESKTOP ── */
+/* share link box */
+.share-box{background:var(--bg3);border:1px solid var(--accent);border-radius:10px;padding:12px 14px;margin-top:12px}
+.share-box-label{font-size:11px;font-weight:700;color:var(--accent2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.share-url{font-family:var(--mono);font-size:11px;color:var(--text2);word-break:break-all;line-height:1.5;margin-bottom:8px}
 @media(min-width:768px){
-  .nav-tabs{display:flex}
-  .bottom-nav,.fab{display:none}
   .main{padding:20px}
   .stats-row{grid-template-columns:repeat(auto-fit,minmax(130px,1fr))}
   .machine-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
@@ -292,13 +251,11 @@ tr:hover td{background:var(--bg3)}
           autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
       </div>
       <button class="btn btn-primary btn-full" id="btn-login" onclick="doLogin()">เข้าสู่ระบบ</button>
-      <div class="auth-hint">
-        ครั้งแรก? กด <strong style="color:var(--text2)">สมัครใช้งาน</strong> ด้านบน<br>
-        ผู้สมัครคนแรกจะได้สิทธิ์ Admin อัตโนมัติ
-      </div>
+      <div class="auth-hint">ครั้งแรก? กด <strong style="color:var(--text2)">สมัครใช้งาน</strong> ด้านบน</div>
     </div>
     <!-- REGISTER -->
     <div class="auth-panel" id="panel-register">
+      <div class="auth-notice" id="reg-notice"></div>
       <div class="auth-error" id="reg-error"></div>
       <div class="auth-success" id="reg-success"></div>
       <div class="form-group">
@@ -323,8 +280,7 @@ tr:hover td{background:var(--bg3)}
         </select>
       </div>
       <button class="btn btn-primary btn-full" id="btn-register" onclick="doRegister()">สมัครใช้งาน</button>
-      <div class="auth-hint">
-        ถ้าเป็นคนแรกในระบบ จะได้สิทธิ์ <strong style="color:var(--accent2)">Admin</strong> ทันที<br>
+      <div class="auth-hint" id="reg-hint">
         ถ้ามี Admin แล้ว ต้องรออนุมัติก่อนเข้าใช้งาน
       </div>
     </div>
@@ -470,12 +426,23 @@ tr:hover td{background:var(--bg3)}
         </div>
         <div id="user-gist-status" style="font-size:12px;color:var(--text3);margin-top:8px"></div>
       </div>
+      <!-- Share link section -->
+      <div id="share-link-box" style="display:none">
+        <div class="share-box">
+          <div class="share-box-label">🔗 Share Link สำหรับสมาชิกทีม</div>
+          <div class="share-url" id="share-url-text"></div>
+          <button class="btn btn-sm btn-primary" onclick="copyShareLink()">📋 ก็อปปี้ Link</button>
+          <p style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.5">
+            ส่ง link นี้ให้สมาชิกเพื่อให้สมัครสมาชิกได้จากอุปกรณ์อื่น โดยไม่ต้องตั้งค่า Gist เอง
+          </p>
+        </div>
+      </div>
       <div id="user-list-container"></div>
     </div>
   </div>
 
   <div class="settings-section">
-    <div class="settings-section-title">☁️ PM Data Gist (Gist 1)</div>
+    <div class="settings-section-title">☁️ PM Data Gist</div>
     <div class="settings-section-body">
       <div class="form-group">
         <label class="form-label">GitHub Token</label>
@@ -586,6 +553,7 @@ tr:hover td{background:var(--bg3)}
 
 <div class="toast-container" id="toast-container"></div>
 <canvas id="snap-canvas"></canvas>
+
 <script>
 const SUPER_ADMIN_PIN = 'PMSYS2025!';
 
@@ -598,11 +566,12 @@ const state = {
   currentUser:null,
 };
 
+// ── LOCAL STORAGE ──
 function saveLocal() {
   localStorage.setItem('pmsys_v3', JSON.stringify({
     machines:state.machines, pmLogs:state.pmLogs,
     gistToken:state.gistToken, gistId:state.gistId,
-    users:state.users,
+    userGistToken:state.userGistToken, userGistId:state.userGistId,
   }));
 }
 function loadLocal() {
@@ -614,12 +583,55 @@ function loadLocal() {
     state.pmLogs = d.pmLogs||[];
     state.gistToken = d.gistToken||'';
     state.gistId = d.gistId||'';
-    state.users = d.users||[];
+    state.userGistToken = d.userGistToken||'';
+    state.userGistId = d.userGistId||'';
   } catch(e) { console.warn(e); }
 }
 
+// ── URL HASH: อ่าน userGist config จาก URL เมื่อเปิดครั้งแรก ──
+// format: #ugist=TOKEN:GISTID
+function readGistFromHash() {
+  try {
+    const hash = window.location.hash;
+    if (!hash) return;
+    const m = hash.match(/[#&]ugist=([^&]+)/);
+    if (!m) return;
+    const parts = decodeURIComponent(m[1]).split(':');
+    if (parts.length < 2) return;
+    const token = parts[0];
+    const gistId = parts.slice(1).join(':'); // gistId อาจมี : ข้างใน
+    if (token && gistId) {
+      state.userGistToken = token;
+      state.userGistId = gistId;
+      saveLocal();
+      // ล้าง hash ออกจาก URL เพื่อไม่ให้ token โชว์ใน address bar
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  } catch(e) { console.warn('readGistFromHash:', e); }
+}
+
+function buildShareLink() {
+  if (!state.userGistToken || !state.userGistId) return '';
+  const base = window.location.origin + window.location.pathname;
+  return base + '#ugist=' + encodeURIComponent(state.userGistToken + ':' + state.userGistId);
+}
+function copyShareLink() {
+  const link = buildShareLink();
+  if (!link) { toast('ยังไม่ได้ตั้งค่า User Gist','error'); return; }
+  navigator.clipboard.writeText(link).then(()=>toast('ก็อปปี้ Link แล้ว ✅','success'))
+    .catch(()=>{
+      // fallback
+      const ta = document.createElement('textarea');
+      ta.value = link; document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      toast('ก็อปปี้ Link แล้ว ✅','success');
+    });
+}
+
+// ── INIT ──
 function init() {
   loadLocal();
+  readGistFromHash(); // ⬅️ อ่าน config จาก URL ก่อนเสมอ
   updateTopbarDate();
   setInterval(updateTopbarDate, 60000);
   const now = new Date();
@@ -651,6 +663,23 @@ function showAuthScreen() {
   document.getElementById('fab-btn').style.display = 'none';
   document.getElementById('topbar-user-info').style.display = 'none';
   document.getElementById('btn-settings-nav').style.display = 'none';
+  // แสดง notice บน register panel ถ้ายังไม่มี userGist
+  updateRegisterNotice();
+}
+function updateRegisterNotice() {
+  const notice = document.getElementById('reg-notice');
+  const hint = document.getElementById('reg-hint');
+  const btn = document.getElementById('btn-register');
+  if (!state.userGistToken || !state.userGistId) {
+    notice.textContent = '⚠️ ระบบยังไม่พร้อม — Admin ต้องตั้งค่า User Gist และส่ง Share Link ให้คุณก่อน';
+    notice.classList.add('show');
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+  } else {
+    notice.classList.remove('show');
+    btn.disabled = false;
+    btn.style.opacity = '';
+  }
 }
 function hideAuthScreen() {
   document.getElementById('auth-screen').classList.add('hidden');
@@ -673,6 +702,7 @@ function switchAuthTab(tab) {
   document.querySelectorAll('.auth-panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
   document.getElementById('panel-'+tab).classList.add('active');
+  if (tab === 'register') updateRegisterNotice();
 }
 async function doLogin() {
   const username = document.getElementById('login-username').value.trim().toLowerCase();
@@ -685,13 +715,25 @@ async function doLogin() {
     hideAuthScreen(); renderAll(); showPage('settings');
     toast('เข้าสู่ระบบ Super Admin 🔑','success'); return;
   }
-  const user = state.users.find(u=>u.username.toLowerCase()===username);
-  if (!user) { errEl.textContent='❌ ไม่พบ username นี้'; errEl.classList.add('show'); return; }
-  if (!user.approved) { errEl.textContent='⏳ รออนุมัติจาก Admin'; errEl.classList.add('show'); return; }
-  if (user.passwordHash!==hashPassword(password)) { errEl.textContent='❌ Password ไม่ถูกต้อง'; errEl.classList.add('show'); return; }
-  state.currentUser = {username:user.username,name:user.name,role:user.role,shift:user.shift};
-  hideAuthScreen(); renderAll(); showPage('dashboard');
-  toast('ยินดีต้อนรับ '+user.name+' 👋','success');
+  if (!state.userGistToken||!state.userGistId) {
+    errEl.textContent='ยังไม่ได้ตั้งค่า User Gist — ขอ Share Link จาก Admin ก่อน';
+    errEl.classList.add('show'); return;
+  }
+  const btn = document.getElementById('btn-login');
+  btn.disabled=true; btn.textContent='⏳ กำลังตรวจสอบ...';
+  try {
+    await loadUsersFromGist();
+    const user = state.users.find(u=>u.username.toLowerCase()===username);
+    if (!user) { errEl.textContent='❌ ไม่พบ username นี้'; errEl.classList.add('show'); }
+    else if (!user.approved) { errEl.textContent='⏳ รออนุมัติจาก Admin'; errEl.classList.add('show'); }
+    else if (user.passwordHash!==hashPassword(password)) { errEl.textContent='❌ Password ไม่ถูกต้อง'; errEl.classList.add('show'); }
+    else {
+      state.currentUser = {username:user.username,name:user.name,role:user.role,shift:user.shift};
+      hideAuthScreen(); renderAll(); showPage('dashboard');
+      toast('ยินดีต้อนรับ '+user.name+' 👋','success');
+    }
+  } catch(e) { errEl.textContent='❌ เชื่อมต่อ Gist ไม่ได้: '+e.message; errEl.classList.add('show'); }
+  finally { btn.disabled=false; btn.textContent='เข้าสู่ระบบ'; }
 }
 async function doRegister() {
   const name=document.getElementById('reg-name').value.trim();
@@ -704,16 +746,36 @@ async function doRegister() {
   if (!name||!username||!password) { errEl.textContent='กรุณากรอกข้อมูลให้ครบ'; errEl.classList.add('show'); return; }
   if (password.length<4) { errEl.textContent='Password ต้องมีอย่างน้อย 4 ตัว'; errEl.classList.add('show'); return; }
   if (!/^[a-z0-9_]+$/.test(username)) { errEl.textContent='Username ใช้ได้เฉพาะ a-z, 0-9, _'; errEl.classList.add('show'); return; }
-  if (state.users.find(u=>u.username===username)) { errEl.textContent='❌ Username นี้ถูกใช้แล้ว'; errEl.classList.add('show'); return; }
-  const isFirst = state.users.length===0;
-  state.users.push({username,name,passwordHash:hashPassword(password),
-    role:isFirst?'admin':'user',shift,approved:isFirst,createdAt:new Date().toISOString()});
-  saveLocal();
-  okEl.textContent = isFirst
-    ? '✅ สมัครสำเร็จ! คุณเป็น Admin คนแรก — เข้าสู่ระบบได้เลย'
-    : '✅ สมัครสำเร็จ! รออนุมัติจาก Admin ก่อนเข้าใช้งาน';
-  okEl.classList.add('show');
-  if (isFirst) setTimeout(()=>switchAuthTab('login'),2000);
+  // ✅ guard: ต้องมี userGist config เท่านั้น
+  if (!state.userGistToken||!state.userGistId) {
+    errEl.textContent='❌ ระบบยังไม่พร้อม — ขอ Share Link จาก Admin ก่อน'; errEl.classList.add('show'); return;
+  }
+  const btn=document.getElementById('btn-register');
+  btn.disabled=true; btn.textContent='⏳ กำลังสมัคร...';
+  try {
+    // โหลด users จาก Gist จริงก่อนเสมอ — ถ้า fail จะ throw ทันที ไม่มีทางเป็น isFirst ผิดพลาด
+    await loadUsersFromGist();
+    if (state.users.find(u=>u.username===username)) {
+      errEl.textContent='❌ Username นี้ถูกใช้แล้ว'; errEl.classList.add('show'); return;
+    }
+    // ✅ isFirst ปลอดภัยแล้ว เพราะ loadUsersFromGist สำเร็จแล้วจริงๆ
+    const isFirst = state.users.length === 0;
+    state.users.push({
+      username, name,
+      passwordHash: hashPassword(password),
+      role: isFirst ? 'admin' : 'user',
+      shift,
+      approved: isFirst,
+      createdAt: new Date().toISOString()
+    });
+    await saveUsersToGist();
+    okEl.textContent = isFirst
+      ? '✅ สมัครสำเร็จ! คุณเป็น Admin คนแรก — เข้าสู่ระบบได้เลย'
+      : '✅ สมัครสำเร็จ! รออนุมัติจาก Admin ก่อนเข้าใช้งาน';
+    okEl.classList.add('show');
+    if (isFirst) setTimeout(()=>switchAuthTab('login'),2000);
+  } catch(e) { errEl.textContent='❌ '+e.message; errEl.classList.add('show'); }
+  finally { btn.disabled=false; btn.textContent='สมัครใช้งาน'; }
 }
 function confirmLogout() {
   if (!confirm('ออกจากระบบ?')) return;
@@ -766,14 +828,21 @@ function saveUserGistConfig() {
 async function renderUserManagement() {
   const container=document.getElementById('user-list-container');
   const setupBox=document.getElementById('user-gist-setup-box');
+  const shareLinkBox=document.getElementById('share-link-box');
   if (!container) return;
   if (!state.userGistToken||!state.userGistId) {
     setupBox.style.display='block';
+    shareLinkBox.style.display='none';
     document.getElementById('user-gist-token').value=state.userGistToken||'';
     document.getElementById('user-gist-id-input').value=state.userGistId||'';
     container.innerHTML=''; return;
   }
-  setupBox.style.display='none';
+  // มี userGist แล้ว — แสดง share link
+  setupBox.style.display='block'; // ยังให้แก้ได้
+  shareLinkBox.style.display='block';
+  document.getElementById('user-gist-token').value=state.userGistToken||'';
+  document.getElementById('user-gist-id-input').value=state.userGistId||'';
+  document.getElementById('share-url-text').textContent=buildShareLink();
   container.innerHTML='<div style="color:var(--text3);font-size:13px;padding:10px">⏳ กำลังโหลด...</div>';
   try {
     await loadUsersFromGist();
@@ -815,7 +884,11 @@ function showPage(name) {
   if (name==='machines') renderMachines();
   if (name==='log') renderLog();
   if (name==='summary') renderSummary();
-  if (name==='settings') { document.getElementById('gist-token').value=state.gistToken; document.getElementById('gist-id').value=state.gistId; renderUserManagement(); }
+  if (name==='settings') {
+    document.getElementById('gist-token').value=state.gistToken;
+    document.getElementById('gist-id').value=state.gistId;
+    renderUserManagement();
+  }
 }
 function renderAll() { updateBadges(); renderDashboard(); populateFilterDropdowns(); }
 function updateBadges() {
@@ -1149,7 +1222,6 @@ function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt
 function clearLocalData(){if(!confirm('ล้างข้อมูลทั้งหมด?'))return;localStorage.removeItem('pmsys_v3');location.reload();}
 
 init();
-
 </script>
 </body>
 </html>
