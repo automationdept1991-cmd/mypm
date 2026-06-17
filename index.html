@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0d1117">
-<title>Machine PM Systems</title>
+<title>Machine PM System</title>
 <link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -433,7 +433,7 @@ tr:hover td{background:var(--bg3)}
           <div class="share-url" id="share-url-text"></div>
           <button class="btn btn-sm btn-primary" onclick="copyShareLink()">📋 ก็อปปี้ Link</button>
           <p style="font-size:11px;color:var(--text3);margin-top:8px;line-height:1.5">
-            ส่ง link นี้ให้สมาชิกเพื่อให้สมัครสมาชิกได้จากอุปกรณ์อื่น โดยไม่ต้องตั้งค่า Gist เอง
+            ส่ง link นี้ให้สมาชิก — เปิดครั้งเดียวจะได้รับทั้ง User Gist และ PM Data Gist โดยอัตโนมัติ ไม่ต้องตั้งค่าเอง
           </p>
         </div>
       </div>
@@ -588,21 +588,45 @@ function loadLocal() {
   } catch(e) { console.warn(e); }
 }
 
-// ── URL HASH: อ่าน userGist config จาก URL เมื่อเปิดครั้งแรก ──
-// format: #ugist=TOKEN:GISTID
+// ── URL HASH: อ่าน gist config จาก URL เมื่อเปิดครั้งแรก ──
+// format: #ugist=UTOKEN:UGISTID&pgist=PTOKEN:PGISTID
 function readGistFromHash() {
   try {
     const hash = window.location.hash;
     if (!hash) return;
-    const m = hash.match(/[#&]ugist=([^&]+)/);
-    if (!m) return;
-    const parts = decodeURIComponent(m[1]).split(':');
-    if (parts.length < 2) return;
-    const token = parts[0];
-    const gistId = parts.slice(1).join(':'); // gistId อาจมี : ข้างใน
-    if (token && gistId) {
-      state.userGistToken = token;
-      state.userGistId = gistId;
+    let changed = false;
+
+    // --- User Gist ---
+    const um = hash.match(/[#&]ugist=([^&]+)/);
+    if (um) {
+      const parts = decodeURIComponent(um[1]).split(':');
+      if (parts.length >= 2) {
+        const token = parts[0];
+        const gistId = parts.slice(1).join(':');
+        if (token && gistId) {
+          state.userGistToken = token;
+          state.userGistId = gistId;
+          changed = true;
+        }
+      }
+    }
+
+    // --- PM Data Gist ---
+    const pm = hash.match(/[#&]pgist=([^&]+)/);
+    if (pm) {
+      const parts = decodeURIComponent(pm[1]).split(':');
+      if (parts.length >= 2) {
+        const token = parts[0];
+        const gistId = parts.slice(1).join(':');
+        if (token && gistId) {
+          state.gistToken = token;
+          state.gistId = gistId;
+          changed = true;
+        }
+      }
+    }
+
+    if (changed) {
       saveLocal();
       // ล้าง hash ออกจาก URL เพื่อไม่ให้ token โชว์ใน address bar
       history.replaceState(null, '', window.location.pathname + window.location.search);
@@ -613,7 +637,12 @@ function readGistFromHash() {
 function buildShareLink() {
   if (!state.userGistToken || !state.userGistId) return '';
   const base = window.location.origin + window.location.pathname;
-  return base + '#ugist=' + encodeURIComponent(state.userGistToken + ':' + state.userGistId);
+  let link = base + '#ugist=' + encodeURIComponent(state.userGistToken + ':' + state.userGistId);
+  // รวม PM Data Gist ถ้ามี
+  if (state.gistToken && state.gistId) {
+    link += '&pgist=' + encodeURIComponent(state.gistToken + ':' + state.gistId);
+  }
+  return link;
 }
 function copyShareLink() {
   const link = buildShareLink();
