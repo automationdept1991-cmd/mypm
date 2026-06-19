@@ -1285,23 +1285,122 @@ function exportCSV() {
   toast('Export CSV แล้ว 📥','success');
 }
 function exportReport() {
-  const month=document.getElementById('summary-month').value;
-  const logs=month?state.pmLogs.filter(l=>l.timestamp.startsWith(month)):state.pmLogs;
-  let html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>PM Report '+month+'</title>'+
-    '<style>body{font-family:sans-serif;padding:20px}table{width:100%;border-collapse:collapse}'+
-    'th,td{border:1px solid #ccc;padding:8px;font-size:12px;text-align:left}th{background:#f0f0f0}</style></head><body>'+
-    '<h1>PM Report '+escHtml(month||'ทั้งหมด')+'</h1>'+
-    '<table><thead><tr><th>เวลา</th><th>Tag</th><th>เครื่องจักร</th><th>สถานะ</th><th>ผู้ตรวจ</th><th>หมายเหตุ</th></tr></thead><tbody>';
-  logs.sort((a,b)=>b.timestamp.localeCompare(a.timestamp)).forEach(l=>{
-    const m=state.machines.find(m=>m.tag===l.machineTag)||{};
-    html+='<tr><td>'+new Date(l.timestamp).toLocaleString('th-TH')+'</td><td>'+escHtml(l.machineTag)+'</td>'+
-      '<td>'+escHtml(m.description||l.machineTag)+'</td><td>'+statusLabel(l.status)+'</td>'+
-      '<td>'+escHtml(l.inspector||'—')+'</td><td>'+escHtml(l.remark||'—')+'</td></tr>';
-  });
-  html+='</tbody></table></body></html>';
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'}));
-  a.download='PM_Report_'+(month||'all')+'.html';a.click();
+  const month = document.getElementById('summary-month').value;
+  const logs = (month ? state.pmLogs.filter(l=>l.timestamp.startsWith(month)) : [...state.pmLogs])
+    .sort((a,b)=>b.timestamp.localeCompare(a.timestamp));
+
+  // ── สถิติ ──
+  const cnt = {good:0, warning:0, stopped:0};
+  const lsm = getLatestStatusMap();
+  state.machines.forEach(m=>{ const s=lsm[m.tag]||'good'; if(cnt[s]!==undefined) cnt[s]++; });
+  const inspMap = {};
+  logs.forEach(l=>{ const k=l.inspector||'ไม่ระบุ'; inspMap[k]=(inspMap[k]||0)+1; });
+
+  const statusColor = {good:'#2ea043', warning:'#d29922', stopped:'#da3633'};
+  const statusBg    = {good:'#0f2d17',  warning:'#2d1b00',  stopped:'#2d0f0e'};
+  const statusText  = {good:'✅ Good',   warning:'⚠️ Warning', stopped:'🛑 Under Repair'};
+
+  // ── แถวตาราง ──
+  const rows = logs.map(l => {
+    const m = state.machines.find(m=>m.tag===l.machineTag) || {};
+    const dt = new Date(l.timestamp).toLocaleString('th-TH',
+      {day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const sc = statusColor[l.status]||'#888';
+    const sb = statusBg[l.status]||'#222';
+    const photos = (l.photos||[]);
+    const photoCell = photos.length
+      ? photos.map(p=>`<img src="${p}" style="width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid #30363d;margin:2px">`).join('')
+      : '<span style="color:#555">—</span>';
+    return `<tr>
+      <td style="font-family:monospace;font-size:11px;white-space:nowrap;color:#9198a1">${dt}</td>
+      <td><span style="background:#21262d;border:1px solid #30363d;border-radius:4px;padding:2px 7px;font-family:monospace;font-size:11px">${escHtml(l.machineTag)}</span></td>
+      <td>${escHtml(m.description||l.machineTag)}<br><span style="font-size:11px;color:#656d76">${escHtml(m.type||'')}${m.location?' · '+escHtml(m.location):''}</span></td>
+      <td><span style="background:${sb};color:${sc};border:1px solid ${sc};border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;white-space:nowrap">${statusText[l.status]||l.status}</span></td>
+      <td style="font-size:12px">${escHtml(l.inspector||'—')}</td>
+      <td style="font-size:12px;max-width:180px">${escHtml(l.remark||'—')}</td>
+      <td style="min-width:80px">${photoCell}</td>
+    </tr>`;
+  }).join('');
+
+  // ── Inspector summary ──
+  const inspRows = Object.entries(inspMap).sort((a,b)=>b[1]-a[1])
+    .map(([name,c])=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #21262d;font-size:13px">
+      <span>${escHtml(name)}</span><span style="font-family:monospace;color:#388bfd">${c} ครั้ง</span></div>`).join('');
+
+  const printDate = new Date().toLocaleString('th-TH',{dateStyle:'full',timeStyle:'short'});
+
+  const html = `<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PM Report ${escHtml(month||'ทั้งหมด')}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#0d1117;color:#e6edf3;font-family:'Segoe UI',Arial,sans-serif;padding:24px;font-size:14px}
+  h1{font-size:22px;font-weight:700;margin-bottom:4px}
+  .sub{font-size:12px;color:#656d76;margin-bottom:24px}
+  .stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px}
+  .stat{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:14px 20px;text-align:center;min-width:110px}
+  .stat.good{border-color:#2ea043}.stat.warn{border-color:#d29922}.stat.stop{border-color:#da3633}
+  .stat-n{font-size:28px;font-weight:700;font-family:monospace;line-height:1}
+  .stat.good .stat-n{color:#2ea043}.stat.warn .stat-n{color:#d29922}.stat.stop .stat-n{color:#da3633}
+  .stat-l{font-size:11px;color:#9198a1;margin-top:4px}
+  .section{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:16px;margin-bottom:20px}
+  .section-title{font-size:12px;font-weight:700;color:#9198a1;text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+  table{width:100%;border-collapse:collapse}
+  th{background:#1c2128;color:#9198a1;font-size:11px;text-transform:uppercase;letter-spacing:.4px;padding:9px 12px;text-align:left;border-bottom:1px solid #30363d;white-space:nowrap}
+  td{padding:10px 12px;border-bottom:1px solid #21262d;vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:#1c2128}
+  .footer{text-align:center;font-size:11px;color:#3d444d;margin-top:24px}
+  @media print{
+    body{background:#fff;color:#111;padding:10px}
+    .section{border-color:#ccc;background:#fff}
+    th{background:#f5f5f5;color:#555}
+    td{border-color:#eee}
+    .stat{border-color:#ccc;background:#fafafa}
+    .stat-l,.sub{color:#666}
+  }
+</style>
+</head>
+<body>
+<h1>📋 PM Report</h1>
+<div class="sub">ช่วงเวลา: ${escHtml(month||'ทั้งหมด')} &nbsp;·&nbsp; ออกรายงาน: ${printDate} &nbsp;·&nbsp; จำนวนบันทึก: ${logs.length} รายการ</div>
+
+<div class="stats">
+  <div class="stat"><div class="stat-n" style="color:#e6edf3">${state.machines.length}</div><div class="stat-l">เครื่องทั้งหมด</div></div>
+  <div class="stat good"><div class="stat-n">${cnt.good}</div><div class="stat-l">✅ Good</div></div>
+  <div class="stat warn"><div class="stat-n">${cnt.warning}</div><div class="stat-l">⚠️ Warning</div></div>
+  <div class="stat stop"><div class="stat-n">${cnt.stopped}</div><div class="stat-l">🛑 Under Repair</div></div>
+  <div class="stat"><div class="stat-n" style="color:#388bfd">${logs.length}</div><div class="stat-l">บันทึกในช่วงนี้</div></div>
+</div>
+
+<div class="section">
+  <div class="section-title">👤 สรุปตามผู้ตรวจ</div>
+  ${inspRows||'<div style="color:#555;font-size:13px">ไม่มีข้อมูล</div>'}
+</div>
+
+<div class="section">
+  <div class="section-title">📋 รายการบันทึก PM</div>
+  <div style="overflow-x:auto">
+  <table>
+    <thead><tr>
+      <th>เวลา</th><th>Tag</th><th>เครื่องจักร</th><th>สถานะ</th>
+      <th>ผู้ตรวจ</th><th>หมายเหตุ</th><th>รูปภาพ</th>
+    </tr></thead>
+    <tbody>${rows||'<tr><td colspan="7" style="text-align:center;color:#555;padding:30px">ไม่มีบันทึก</td></tr>'}</tbody>
+  </table>
+  </div>
+</div>
+
+<div class="footer">สร้างโดย PM System &nbsp;·&nbsp; ${printDate}</div>
+</body></html>`;
+
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([html], {type:'text/html;charset=utf-8'}));
+  a.download = 'PM_Report_'+(month||'all')+'.html';
+  a.click();
   toast('Export Report แล้ว 📊','success');
 }
 
