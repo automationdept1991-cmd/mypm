@@ -746,7 +746,7 @@ async function doLogin() {
   if (!username||!password) { errEl.textContent='กรุณาใส่ username และ password'; errEl.classList.add('show'); return; }
   if (username==='superadmin' && password===SUPER_ADMIN_PIN) {
     state.currentUser = {username:'superadmin',name:'Super Admin',role:'admin',shift:'-'};
-    hideAuthScreen(); renderAll(); showPage('settings');
+    hideAuthScreen(); renderAll(); showPage('settings'); startAutoSyncTimer();
     toast('เข้าสู่ระบบ Super Admin 🔑','success'); return;
   }
   if (!state.userGistToken||!state.userGistId) {
@@ -763,7 +763,7 @@ async function doLogin() {
     else if (user.passwordHash!==hashPassword(password)) { errEl.textContent='❌ Password ไม่ถูกต้อง'; errEl.classList.add('show'); }
     else {
       state.currentUser = {username:user.username,name:user.name,role:user.role,shift:user.shift};
-      hideAuthScreen(); renderAll(); showPage('dashboard');
+      hideAuthScreen(); renderAll(); showPage('dashboard'); startAutoSyncTimer();
       toast('ยินดีต้อนรับ '+user.name+' 👋','success');
     }
   } catch(e) { errEl.textContent='❌ เชื่อมต่อ Gist ไม่ได้: '+e.message; errEl.classList.add('show'); }
@@ -925,17 +925,34 @@ function showPage(name) {
   }
 }
 
-// ── AUTO SYNC เมื่อเข้า page (silent — ไม่แสดง toast) ──
-let _lastAutoSync = 0;
-async function autoSyncGist(page) {
+// ══════════════════════════════════════════
+// ── SYNC ENGINE ──
+// ══════════════════════════════════════════
+const SYNC = {
+  AUTO_INTERVAL_MS : 5 * 60 * 1000,
+  PAGE_THROTTLE_MS : 30 * 1000,
+  PUSH_RETRY_MAX   : 3,
+  PUSH_RETRY_DELAY : 5000,
+  _lastPageSync    : 0,
+  _autoTimer       : null,
+  _pushRetryCount  : 0,
+  _pushPending     : false,
+  _pulling         : false,
+};
+
+function setSyncStatus(msg, type='idle') {
+  const el = document.getElementById('machine-sync-status');
+  if (!el) return;
+  const icon = {idle:'', syncing:'⏳', ok:'✅', error:'❌'}[type]||'';
+  el.textContent = icon ? icon+' '+msg : msg;
+  el.style.color = {idle:'var(--text3)',syncing:'var(--warn)',ok:'var(--good)',error:'var(--stop)'}[type]||'var(--text3)';
+}
+
+async function pullFromGist(forced=false) {
   if (!state.gistToken || !state.gistId) return;
-  // throttle: sync ได้ทุก 30 วินาทีเท่านั้น ไม่งั้น กดไปมาระหว่าง page จะ spam API
-  const now = Date.now();
-  if (now - _lastAutoSync < 30000) return;
-  _lastAutoSync = now;
-  // แสดง indicator เล็กๆ บน machines page ถ้าอยู่ที่นั้น
-  const statusEl = document.getElementById('machine-sync-status');
-  if (statusEl) statusEl.textContent = '⏳ กำลังซิงค์...';
+  if (SYNC._pulling) return;
+  SYNC._pulling = true;
+  setSyncStatus('กำลังซิงค์...','syncing');
   try {
     const r = await fetch('https://api.github.com/gists/'+state.gistId,
       {headers:{Authorization:'token '+state.gistToken}});
@@ -945,47 +962,86 @@ async function autoSyncGist(page) {
     if (raw) {
       const d = JSON.parse(raw);
       if (d.machines) state.machines = d.machines;
-      if (d.pmLogs) state.pmLogs = d.pmLogs;
+      if (d.pmLogs)   state.pmLogs   = d.pmLogs;
       saveLocal(); populateFilterDropdowns();
       renderDashboard(); renderMachines(); updateBadges();
     }
-    if (statusEl) statusEl.textContent = '✅ ซิงค์แล้ว '+new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})+' น.';
+    SYNC._lastPageSync = Date.now();
+    const t = new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+    setSyncStatus('ซิงค์แล้ว '+t+' น.','ok');
+    if (forced) toast('ซิงค์สำเร็จ ✅','success');
   } catch(e) {
-    if (statusEl) statusEl.textContent = '❌ ซิงค์ไม่ได้: '+e.message;
+    setSyncStatus('ซิงค์ไม่ได้: '+e.message,'error');
+    if (forced) toast('ซิงค์ไม่ได้: '+e.message,'error');
+  } finally {
+    SYNC._pulling = false;
   }
 }
 
-// ── MANUAL SYNC ปุ่มบน machines page ──
-async function syncMachinesManual() {
-  if (!state.gistToken || !state.gistId) { toast('ยังไม่ได้ตั้งค่า PM Gist','error'); return; }
-  const btn = document.getElementById('btn-machine-sync');
-  const statusEl = document.getElementById('machine-sync-status');
-  if (btn) { btn.disabled=true; btn.textContent='⏳ กำลังซิงค์...'; }
-  if (statusEl) statusEl.textContent = '';
-  _lastAutoSync = 0; // reset throttle เพื่อให้ auto sync รอบถัดไปทำงานได้
+async function pushToGistWithRetry(silent=false) {
+  if (!state.gistToken || !state.gistId) {
+    if (!silent) toast('ยังไม่ได้ตั้งค่า Gist','error');
+    return;
+  }
+  SYNC._pushPending = true;
+  SYNC._pushRetryCount = 0;
+  await _doPush(silent);
+}
+async function _doPush(silent) {
+  const s = document.getElementById('sync-status');
+  if (s) s.textContent = '⏳ กำลัง Push'+(SYNC._pushRetryCount>0?' (retry '+SYNC._pushRetryCount+')...':'...');
   try {
-    const r = await fetch('https://api.github.com/gists/'+state.gistId,
-      {headers:{Authorization:'token '+state.gistToken}});
+    const r = await fetch('https://api.github.com/gists/'+state.gistId, {
+      method:'PATCH',
+      headers:{Authorization:'token '+state.gistToken,'Content-Type':'application/json'},
+      body:JSON.stringify({files:{'pm-data.json':{
+        content:JSON.stringify({machines:state.machines,pmLogs:state.pmLogs},null,2)
+      }}})
+    });
     if (!r.ok) throw new Error('HTTP '+r.status);
-    const g = await r.json();
-    const raw = g.files['pm-data.json']?.content;
-    if (raw) {
-      const d = JSON.parse(raw);
-      if (d.machines) state.machines = d.machines;
-      if (d.pmLogs) state.pmLogs = d.pmLogs;
-      saveLocal(); populateFilterDropdowns();
-      renderDashboard(); renderMachines(); updateBadges();
-    }
-    _lastAutoSync = Date.now();
-    if (statusEl) statusEl.textContent = '✅ ซิงค์แล้ว '+new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})+' น.';
-    toast('ซิงค์สำเร็จ ✅','success');
+    SYNC._pushPending = false;
+    SYNC._pushRetryCount = 0;
+    if (s) s.textContent = '✅ Push สำเร็จ '+new Date().toLocaleTimeString('th-TH');
+    if (!silent) toast('Push สำเร็จ ☁️','success');
   } catch(e) {
-    if (statusEl) statusEl.textContent = '❌ '+e.message;
-    toast('ซิงค์ไม่ได้: '+e.message,'error');
-  } finally {
-    if (btn) { btn.disabled=false; btn.textContent='🔄 ซิงค์'; }
+    SYNC._pushRetryCount++;
+    if (SYNC._pushRetryCount <= SYNC.PUSH_RETRY_MAX) {
+      if (s) s.textContent = '⚠️ Push ล้มเหลว รอ retry ('+SYNC._pushRetryCount+'/'+SYNC.PUSH_RETRY_MAX+')...';
+      toast('Push ล้มเหลว — retry ใน 5 วิ ('+SYNC._pushRetryCount+'/'+SYNC.PUSH_RETRY_MAX+')','warn');
+      setTimeout(()=>_doPush(silent), SYNC.PUSH_RETRY_DELAY);
+    } else {
+      SYNC._pushPending = false;
+      if (s) s.textContent = '❌ Push ล้มเหลวทั้งหมด '+SYNC.PUSH_RETRY_MAX+' ครั้ง';
+      toast('❌ Push ล้มเหลวทั้งหมด กรุณา Push ด้วยตนเอง','error');
+    }
   }
 }
+
+async function autoSyncGist() {
+  if (!state.gistToken || !state.gistId) return;
+  if (Date.now() - SYNC._lastPageSync < SYNC.PAGE_THROTTLE_MS) return;
+  await pullFromGist(false);
+}
+
+async function syncMachinesManual() {
+  const btn = document.getElementById('btn-machine-sync');
+  if (btn) { btn.disabled=true; btn.textContent='⏳...'; }
+  await pullFromGist(true);
+  if (btn) { btn.disabled=false; btn.textContent='🔄 ซิงค์'; }
+}
+
+function startAutoSyncTimer() {
+  if (SYNC._autoTimer) clearInterval(SYNC._autoTimer);
+  SYNC._autoTimer = setInterval(async () => {
+    if (!state.currentUser) return;
+    SYNC._lastPageSync = 0;
+    await pullFromGist(false);
+  }, SYNC.AUTO_INTERVAL_MS);
+}
+
+async function pushToGist() { await pushToGistWithRetry(false); }
+async function syncFromGist() { await pullFromGist(true); }
+
 function renderAll() { updateBadges(); renderDashboard(); populateFilterDropdowns(); }
 function updateBadges() {
   document.getElementById('badge-machines').textContent=state.machines.length;
@@ -1156,7 +1212,7 @@ async function savePmRecord() {
   state.pmLogs.push(record); saveLocal(); stopCamera(); closeModal('modal-pm');
   renderDashboard(); renderMachines(); updateBadges();
   toast('บันทึก PM แล้ว ✅','success');
-  if (state.gistToken&&state.gistId) pushToGist().catch(()=>{});
+  if (state.gistToken&&state.gistId) pushToGistWithRetry(true);
 }
 
 // ── CAMERA ──
@@ -1246,30 +1302,7 @@ async function createNewGist() {
     saveLocal();s.textContent='✅ สร้างแล้ว: '+g.id;toast('สร้าง Gist ✅','success');
   } catch(e){s.textContent='❌ '+e.message;}
 }
-async function pushToGist() {
-  if(!state.gistToken||!state.gistId){toast('ยังไม่ได้ตั้งค่า Gist','error');return;}
-  const s=document.getElementById('sync-status');if(s)s.textContent='⏳ กำลัง Push...';
-  try {
-    const r=await fetch('https://api.github.com/gists/'+state.gistId,{method:'PATCH',
-      headers:{Authorization:'token '+state.gistToken,'Content-Type':'application/json'},
-      body:JSON.stringify({files:{'pm-data.json':{content:JSON.stringify({machines:state.machines,pmLogs:state.pmLogs},null,2)}}})});
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    if(s)s.textContent='✅ Push สำเร็จ '+new Date().toLocaleTimeString('th-TH');
-    toast('Push สำเร็จ ☁️','success');
-  } catch(e){if(s)s.textContent='❌ '+e.message;toast('Push ล้มเหลว','error');}
-}
-async function syncFromGist() {
-  if(!state.gistToken||!state.gistId)return;
-  const s=document.getElementById('sync-status');if(s)s.textContent='⏳ กำลัง Pull...';
-  try {
-    const r=await fetch('https://api.github.com/gists/'+state.gistId,{headers:{Authorization:'token '+state.gistToken}});
-    if(!r.ok)throw new Error('HTTP '+r.status);
-    const g=await r.json();const raw=g.files['pm-data.json']?.content;
-    if(raw){const d=JSON.parse(raw);if(d.machines)state.machines=d.machines;if(d.pmLogs)state.pmLogs=d.pmLogs;saveLocal();populateFilterDropdowns();renderAll();}
-    if(s)s.textContent='✅ Pull สำเร็จ '+new Date().toLocaleTimeString('th-TH');
-    toast('Sync สำเร็จ ✅','success');
-  } catch(e){if(s)s.textContent='❌ '+e.message;toast('Sync ล้มเหลว','error');}
-}
+
 
 // ── EXPORT ──
 function exportCSV() {
